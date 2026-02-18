@@ -1,56 +1,34 @@
 //
-// Created by Mathijs Follon on 2/17/26.
+// Created by Mathijs Follon on 2/18/26.
 //
 
 #ifndef RIBBLE_ERROR_H
 #define RIBBLE_ERROR_H
-
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <optional>
-#include <type_traits>
-
+#include <string>
 
 namespace ribble::error {
 
-	class Error
-	{
-	public:
-		struct ErrorLocation {
-#ifdef RIBBLE_DEBUG
-			const char* file;
-			size_t line;
-#endif
-		};
+    enum class Failure {
+        Logger_FileNotFound,
+    };
 
-		explicit Error(uint8_t failure, bool fatal = false);
-		Error(uint8_t failure, const ErrorLocation& errorLocation, bool fatal = false);
-		virtual ~Error() = default;
+    class Error {
+    public:
+        explicit Error(std::string&& message, Failure failure, bool isFatal = false, const char *fileName = nullptr, size_t fileLine = 0);
 
-		template<typename T>
-		requires std::is_enum_v<T> || std::convertible_to<uint8_t, T>
-		T failure() const {
-			return static_cast<T>(m_failure);
-		}
+        [[nodiscard]] const char* file_name() const;
+        [[nodiscard]] size_t file_line() const;
+        [[nodiscard]] std::string_view message() const;
+        [[nodiscard]] bool is_fatal() const;
+        [[nodiscard]] Failure failure() const;
 
-		[[nodiscard]] std::optional<ErrorLocation> location() const;
-		[[nodiscard]] bool is_fatal() const { return m_isFatal; }
-
-		using ErrorCallback = std::function<void(const Error&)>;
-		
-		static void SetCallback(ErrorCallback callback);
-		static void Throw(uint8_t failure, bool fatal = false);
-		static void Throw(uint8_t failure, const ErrorLocation& errorLocation, bool fatal = false);
-
-	protected:
-		static ErrorCallback s_callback;
-		bool m_isFatal;
-		uint8_t m_failure;
-		ErrorLocation m_location;
-	};
-
-} // namespace ribble::error
-
+    private:
+        const char* m_fileName;
+        size_t m_fileLine;
+        std::string m_message;
+        bool m_isFatal;
+        Failure m_failure;
+    };
+}
 
 #endif //RIBBLE_ERROR_H
