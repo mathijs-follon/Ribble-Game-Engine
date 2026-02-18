@@ -5,4 +5,7 @@
 #ifndef RIBBLE_RIBBLE_H
 #define RIBBLE_RIBBLE_H
 
+// Error system
+#include <ribble/error/error.h>
+#include <ribble/logger/logger.h>
 #endif //RIBBLE_RIBBLE_H

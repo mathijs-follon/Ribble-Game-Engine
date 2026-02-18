@@ -1,53 +1,56 @@
 //
-// Created by Mathijs Follon on 2/17/26.
+// Created by Mathijs Follon on 2/18/26.
 //
+
 #include <ribble/error/error.h>
 
+#include <utility>
+
+#include "ribble/logger/logger.h"
+
 namespace ribble::error {
-    // Static callback initialization
-    Error::ErrorCallback Error::s_callback{};
-
-    Error::Error(const uint8_t failure, const bool fatal)
-        : m_isFatal{fatal}
-        , m_failure{failure}
-        , m_location{}
+    Error::Error(std::string&& message, const Failure code, const bool isFatal, const char *fileName, const size_t fileLine)
+    : m_fileName{fileName}
+    , m_fileLine{fileLine}
+    , m_message{std::move(message)}
+    , m_isFatal{isFatal}
+    , m_failure{code}
     {
-    }
-
-    Error::Error(const uint8_t failure, [[maybe_unused]] const ErrorLocation &errorLocation, const bool fatal)
-#ifdef RIBBLE_DEBUG
-        : m_isFatal{fatal}
-        , m_failure{failure}
-        , m_location{errorLocation}
-    {}
-#else
-    : Error{failure, fatal} {}
-#endif
-
-    std::optional<Error::ErrorLocation> Error::location() const {
-#ifdef RIBBLE_DEBUG
-        return std::optional{m_location};
-#else
-        return std::optional<ErrorLocation>{};
-#endif
-    }
-
-    void Error::SetCallback(ErrorCallback callback) {
-        s_callback = std::move(callback);
-    }
-
-    void Error::Throw(const uint8_t failure, const bool fatal) {
-        Error error{failure, fatal};
-        if (s_callback) {
-            s_callback(error);
+        const char* file = file_name() ? file_name() : "undefined";
+        if (is_fatal()) {
+            GetLogger().error(
+                "A fatal error with cause [", static_cast<uint8_t>(failure()) ,"] occurred at ",
+                file, ':', file_line() ? std::to_string(file_line()) : "undefined"
+            );
+            throw std::runtime_error(
+                "Fatal error [" + std::to_string(static_cast<uint8_t>(failure())) +
+                "] at " + file + ":" +
+                (file_line() ? std::to_string(file_line()) : "undefined")
+            );
         }
+        GetLogger().warning(
+            "A non fatal error with cause [", static_cast<uint8_t>(failure()) ,"] occurred at ",
+            file, ':', file_line() ? std::to_string(file_line()) : "undefined"
+        );
     }
 
-    void Error::Throw(const uint8_t failure, const ErrorLocation& errorLocation, const bool fatal) {
-        Error error{failure, errorLocation, fatal};
-        if (s_callback) {
-            s_callback(error);
-        }
+    inline const char * Error::file_name() const {
+        return m_fileName;
     }
 
+    inline size_t Error::file_line() const {
+        return m_fileLine;
+    }
+
+    inline std::string_view Error::message() const {
+        return m_message;
+    }
+
+    inline bool Error::is_fatal() const {
+        return m_isFatal;
+    }
+
+    inline Failure Error::failure() const {
+        return m_failure;
+    }
 }

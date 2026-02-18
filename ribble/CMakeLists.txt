@@ -23,7 +23,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(RIBBLE_BUILD_SHARED "Build Ribble as a shared library" OFF)
 option(RIBBLE_BUILD_DEBUG "Build Ribble in debug mode (more logging)" ON)
 option(RIBBLE_GLM_EXPERIMENTAL "Build Ribble with glm experimental features" ON)
-option(RIBBLE_BUILD_TESTS "Build Ribble tests" ON)
 option(RIBBLE_INSTALL "Enable install target" OFF)
 
 # Platform detection
@@ -47,13 +46,6 @@ include(FetchContent)
 
 set(FETCHCONTENT_QUIET ON)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
-
-if(RIBBLE_BUILD_TESTS)
-    FetchContent_Declare(doctest
-            GIT_REPOSITORY https://github.com/doctest/doctest.git
-            GIT_TAG v2.4.12
-            GIT_SHALLOW TRUE)
-endif()
 
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
@@ -85,10 +77,6 @@ FetchContent_Declare(glm
         GIT_TAG 1.0.1
         GIT_SHALLOW TRUE)
 
-if(RIBBLE_BUILD_TESTS)
-    FetchContent_MakeAvailable(doctest)
-endif()
-
 FetchContent_MakeAvailable(spdlog stb miniaudio json ufbx glm)
 
 # Find required system libraries
@@ -113,12 +101,14 @@ endif()
 
 set(RIBBLE_SOURCES
         include/ribble.h
-        include/ribble/engine/engine.h
-        include/ribble/engine/engine_config.h
-        include/ribble/error/error.h
-        include/ribble/error/verbose_error.h
+        include/ribble/logger/log_level.h
+        include/ribble/logger/log_target.h
+        include/ribble/logger/logger.h
+        source/logger/log_target.cpp
+        source/logger/logger.cpp
+        include/ribble/utils/enum.h
         source/error/error.cpp
-        source/error/verbose_error.cpp
+        include/ribble/error/error.h
 )
 
 # Set library type
@@ -131,6 +121,7 @@ endif()
 # Create the main library
 add_library(Ribble ${LIBRARY_BUILD_MODE}
         ${RIBBLE_SOURCES}
+        source/ribble.cpp
 )
 add_library(Ribble::Ribble ALIAS Ribble)
 
@@ -182,11 +173,6 @@ if(RIBBLE_BUILD_SHARED)
     target_compile_definitions(Ribble PRIVATE RIBBLE_EXPORTS)
 endif()
 
-if(RIBBLE_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
-
 # Configuration summary
 message(STATUS "Ribble configured successfully.")
 message(STATUS "")
@@ -202,7 +188,6 @@ message(STATUS "Options:")
 message(STATUS "  RIBBLE_BUILD_SHARED:        ${RIBBLE_BUILD_SHARED}")
 message(STATUS "  RIBBLE_BUILD_DEBUG:         ${RIBBLE_BUILD_DEBUG}")
 message(STATUS "  RIBBLE_GLM_EXPERIMENTAL:    ${RIBBLE_GLM_EXPERIMENTAL}")
-message(STATUS "  RIBBLE_BUILD_TESTS:         ${RIBBLE_BUILD_TESTS}")
 message(STATUS "  RIBBLE_INSTALL:             ${RIBBLE_INSTALL}")
 message(STATUS "")
 message(STATUS "Dependencies:")
