@@ -2,10 +2,22 @@
 
 #include "logger.h"
 
-#include <expected>
 #include <string>
 #include <ribble/util/enum.h>
 #include <utility>
+#include <variant>
+
+// Check for std::expected support (C++23 feature)
+// MSVC with /std:c++latest may not set __cplusplus correctly without /Zc:__cplusplus
+// So we check both __cplusplus and MSVC version (19.30+ supports C++23)
+// MSVC 19.44 (version 1944) definitely supports C++23 and std::expected
+#if __cplusplus >= 202302L || (defined(_MSC_VER) && _MSC_VER >= 1930 && defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || (defined(_MSC_VER) && _MSC_VER >= 1940)
+    #include <expected>
+    #ifndef __cpp_lib_expected
+    #endif
+#else
+    #error "std::expected requires C++23. Please set CMAKE_CXX_STANDARD to 23 and ensure your compiler supports C++23."
+#endif
 
 namespace ribble::core {
 
@@ -19,6 +31,10 @@ namespace ribble::core {
 
         [[nodiscard]] bool is_fatal() const {
             return isFatal;
+        }
+
+        [[nodiscard]] T code() const {
+            return failureType;
         }
 
         template <typename... Args>
@@ -55,6 +71,7 @@ namespace ribble::core {
         }
     };
 
+    // General Result specialization for non-void types
     template<typename R, typename F>
     struct Result : std::expected<R, Failure<F>> {
         using base_type = std::expected<R, Failure<F>>;
@@ -74,6 +91,61 @@ namespace ribble::core {
         }
     };
 
+    template<typename F>
+    struct Result<void, F> {
+        using base_type = std::expected<std::monostate, Failure<F>>;
+        base_type m_expected;
+
+        Result() = default;
+
+        Result(std::monostate) : m_expected(std::in_place) {}
+
+        Result(Failure<F> failure) : m_expected(std::unexpected<Failure<F>>(failure)) {}
+
+        Result(base_type expected) : m_expected(std::move(expected)) {}
+
+        bool has_value() const { return m_expected.has_value(); }
+        explicit operator bool() const { return m_expected.has_value(); }
+        
+        const Failure<F>& error() const { return m_expected.error(); }
+        Failure<F>& error() { return m_expected.error(); }
+        
+        const base_type& value() const { return m_expected; }
+        base_type& value() { return m_expected; }
+
+        template<typename U>
+        auto value_or(U&& default_value) const {
+            return m_expected.value_or(std::forward<U>(default_value));
+        }
+
+        template<typename Func>
+        auto and_then(Func&& f) const {
+            return m_expected.and_then([&f](const std::monostate&) {
+                return f();
+            });
+        }
+
+        template<typename Func>
+        auto or_else(Func&& f) const {
+            return m_expected.or_else(std::forward<Func>(f));
+        }
+
+        template<typename Func>
+        auto transform(Func&& f) const {
+            return m_expected.transform([&f](const std::monostate&) {
+                return f();
+            });
+        }
+
+        static Result<void, F> Ok() {
+            return Result{std::monostate{}};
+        }
+        
+        static Result<void, F> Fail(Failure<F> failure) {
+            return Result{failure};
+        }
+    };
+
     template<typename R>
     struct result_ok_builder {
         R value;
@@ -81,6 +153,15 @@ namespace ribble::core {
         template<typename F>
         operator Result<R, F>() const {
             return Result<R, F>{value};
+        }
+    };
+
+    // Specialization for void
+    template<>
+    struct result_ok_builder<void> {
+        template<typename F>
+        operator Result<void, F>() const {
+            return Result<void, F>::Ok();
         }
     };
 
@@ -97,6 +178,10 @@ namespace ribble::core {
     template<typename R>
     result_ok_builder<R> Ok(R value) {
         return result_ok_builder<R>{value};
+    }
+
+    inline result_ok_builder<void> Ok() {
+        return result_ok_builder<void>{};
     }
 
     template<typename F>

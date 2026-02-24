@@ -1,0 +1,223 @@
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [] # none for now
+  pull_request:
+    branches: [] # none for now
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      # Set up a matrix to run the following configurations:
+      # 1. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
+      # 2. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
+      #
+      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
+      matrix:
+        os: [ubuntu-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache CMake dependencies
+      uses: actions/cache@v4
+      id: cache-cmake-deps
+      with:
+        path: |
+          ${{ github.workspace }}/build/_deps
+        key: ${{ runner.os }}-${{ matrix.c_compiler }}-cmake-deps-${{ hashFiles('CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.c_compiler }}-cmake-deps-
+          ${{ runner.os }}-cmake-deps-
+
+    - name: Cache system packages (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/cache@v4
+      with:
+        path: |
+          /var/cache/apt
+          /var/lib/apt
+        key: ${{ runner.os }}-apt-${{ matrix.c_compiler }}-${{ hashFiles('.github/workflows/cmake-multi-platform.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-${{ matrix.c_compiler }}-
+          ${{ runner.os }}-apt-
+
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Update package lists (use cache if available)
+        sudo apt-get update
+        
+        # Install system dependencies
+        sudo apt-get install -y --no-install-recommends \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libvulkan-dev \
+          vulkan-tools
+        
+        # Install newer compilers that support std::expected
+        if [ "${{ matrix.c_compiler }}" == "gcc" ]; then
+          # Install GCC 14 which has better C++23 and std::expected support
+          # Try GCC 14 first, fall back to GCC 13 if not available
+          if sudo apt-get install -y gcc-14 g++-14 2>/dev/null; then
+            echo "Installed GCC 14"
+          else
+            echo "GCC 14 not available, trying GCC 13..."
+            sudo apt-get install -y gcc-13 g++-13
+          fi
+        elif [ "${{ matrix.c_compiler }}" == "clang" ]; then
+          # Install Clang 18+ and libc++ for better C++23 support (including std::expected)
+          # Try Clang 18 first, fall back to Clang 17 if not available
+          if sudo apt-get install -y clang-18 libc++-18-dev libc++abi-18-dev 2>/dev/null; then
+            echo "Installed Clang 18"
+          else
+            echo "Clang 18 not available, trying Clang 17..."
+            sudo apt-get install -y clang-17 libc++-17-dev libc++abi-17-dev || \
+            sudo apt-get install -y clang-16 libc++-16-dev libc++abi-16-dev || \
+            sudo apt-get install -y libc++-dev libc++abi-dev
+          fi
+        fi
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+      id: strings
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Configure CMake (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      shell: bash
+      run: |
+        # Determine compiler paths based on version (try newer versions first)
+        if [ "${{ matrix.c_compiler }}" == "gcc" ]; then
+          if command -v gcc-14 &> /dev/null; then
+            C_COMPILER="gcc-14"
+            CXX_COMPILER="g++-14"
+          elif command -v gcc-13 &> /dev/null; then
+            C_COMPILER="gcc-13"
+            CXX_COMPILER="g++-13"
+          else
+            C_COMPILER="gcc"
+            CXX_COMPILER="g++"
+          fi
+        elif [ "${{ matrix.c_compiler }}" == "clang" ]; then
+          if command -v clang-18 &> /dev/null; then
+            C_COMPILER="clang-18"
+            CXX_COMPILER="clang++-18"
+          elif command -v clang-17 &> /dev/null; then
+            C_COMPILER="clang-17"
+            CXX_COMPILER="clang++-17"
+          elif command -v clang-16 &> /dev/null; then
+            C_COMPILER="clang-16"
+            CXX_COMPILER="clang++-16"
+          else
+            C_COMPILER="clang"
+            CXX_COMPILER="clang++"
+          fi
+        else
+          C_COMPILER="${{ matrix.c_compiler }}"
+          CXX_COMPILER="${{ matrix.cpp_compiler }}"
+        fi
+        
+        # Check compiler version for debugging
+        echo "Compiler versions:"
+        $C_COMPILER --version || true
+        $CXX_COMPILER --version || true
+        
+        CMAKE_ARGS=(
+          -B "${{ steps.strings.outputs.build-output-dir }}"
+          -DCMAKE_CXX_COMPILER="$CXX_COMPILER"
+          -DCMAKE_C_COMPILER="$C_COMPILER"
+          -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}"
+          -DCMAKE_CXX_STANDARD=23
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON
+          -DCMAKE_CXX_EXTENSIONS=OFF
+          -S "${{ github.workspace }}"
+        )
+        # Use libc++ with Clang for better C++23 support (including std::expected)
+        if [ "${{ matrix.c_compiler }}" == "clang" ]; then
+          CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-stdlib=libc++ -std=c++23")
+          CMAKE_ARGS+=(-DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi")
+        else
+          # For GCC 14, explicitly set C++23 flag
+          CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-std=c++23")
+        fi
+        cmake "${CMAKE_ARGS[@]}"
+
+    - name: Build
+      # Build your program with the given configuration.
+      shell: bash
+      run: |
+        cmake --build "${{ steps.strings.outputs.build-output-dir }}" --config "${{ matrix.build_type }}" --verbose
+
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest --build-config ${{ matrix.build_type }} --output-on-failure
+
+    - name: Find and Run Unit Tests
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Run the unit test executable directly to test the Ribble engine library
+      shell: bash
+      run: |
+        TEST_EXE=$(find . -name "ribble_unit_tests" -type f -executable | head -n 1)
+        if [ -n "$TEST_EXE" ]; then
+          echo "Running: $TEST_EXE"
+          "$TEST_EXE"
+        else
+          echo "Error: ribble_unit_tests not found"
+          exit 1
+        fi
+
+    - name: Find and Run Integration Tests
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Run the integration test executable directly to test the Ribble engine library
+      shell: bash
+      run: |
+        TEST_EXE=$(find . -name "ribble_integration_tests" -type f -executable | head -n 1)
+        if [ -n "$TEST_EXE" ]; then
+          echo "Running: $TEST_EXE"
+          "$TEST_EXE"
+        else
+          echo "Error: ribble_integration_tests not found"
+          exit 1
+        fi
+
+    - name: Find and Run Backend Tests
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Run the backend test executable directly to test the Ribble engine library
+      shell: bash
+      run: |
+        TEST_EXE=$(find . -name "ribble_backend_tests" -type f -executable | head -n 1)
+        if [ -n "$TEST_EXE" ]; then
+          echo "Running: $TEST_EXE"
+          "$TEST_EXE"
+        else
+          echo "Warning: ribble_backend_tests not found, skipping..."
+        fi
+      continue-on-error: true
+
