@@ -323,6 +323,19 @@ jobs:
         Write-Host "Building with configuration: $config"
         Write-Host "Build directory: $buildDir"
         
+        # First, try to build just the Ribble library to see if there are compilation errors
+        Write-Host "=== Building Ribble library first ==="
+        $ribbleBuild = cmake --build $buildDir --config $config --target Ribble --verbose 2>&1
+        $ribbleExitCode = $LASTEXITCODE
+        
+        Write-Host $ribbleBuild
+        
+        if ($ribbleExitCode -ne 0) {
+          Write-Host "Ribble library build failed with exit code: $ribbleExitCode"
+          Write-Host "This is likely the root cause of the linker errors."
+          exit $ribbleExitCode
+        }
+        
         # Build with verbose output to see errors
         # Capture both stdout and stderr, and ensure we see all output
         $ErrorActionPreference = "Continue"
@@ -349,15 +362,39 @@ jobs:
         if ($process.ExitCode -ne 0) {
           Write-Host "Build failed with exit code: $($process.ExitCode)"
           Write-Host "Checking for error logs..."
+          
+          # Check if Ribble.lib exists
+          $ribbleLib = Get-ChildItem -Path $buildDir -Recurse -Filter "Ribble.lib" -ErrorAction SilentlyContinue
+          if (-not $ribbleLib) {
+            Write-Host "ERROR: Ribble.lib not found! Checking for compilation errors..."
+            # Look for unsuccessful build markers
+            Get-ChildItem -Path $buildDir -Recurse -Filter "unsuccessfulbuild" -ErrorAction SilentlyContinue | ForEach-Object {
+              Write-Host "=== Unsuccessful build marker: $($_.FullName) ==="
+              $parentDir = $_.Directory.Parent
+              if ($parentDir) {
+                Write-Host "Project directory: $($parentDir.FullName)"
+              }
+            }
+            # Look for error files in Ribble project directory
+            $ribbleDir = Join-Path $buildDir "Ribble.dir\Release"
+            if (Test-Path $ribbleDir) {
+              Write-Host "=== Checking Ribble build directory ==="
+              Get-ChildItem -Path $ribbleDir -Recurse -Filter "*.tlog" -ErrorAction SilentlyContinue | ForEach-Object {
+                Write-Host "=== TLog: $($_.FullName) ==="
+                Get-Content $_.FullName -Tail 100 -ErrorAction SilentlyContinue | Write-Host
+              }
+            }
+          }
+          
           # Try to find error details in build directory
           Get-ChildItem -Path $buildDir -Recurse -Filter "*.log" -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "=== Log file: $($_.FullName) ==="
             Get-Content $_.FullName -Tail 100 -ErrorAction SilentlyContinue | Write-Host
           }
-          # Also check for MSBuild log files
-          Get-ChildItem -Path $buildDir -Recurse -Filter "*.tlog" -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object {
-            Write-Host "=== TLog file: $($_.FullName) ==="
-            Get-Content $_.FullName -Tail 50 -ErrorAction SilentlyContinue | Write-Host
+          # Also check for MSBuild log files with errors
+          Get-ChildItem -Path $buildDir -Recurse -Filter "*.tlog" -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*error*" -or $_.Name -like "*fail*" } | ForEach-Object {
+            Write-Host "=== Error TLog: $($_.FullName) ==="
+            Get-Content $_.FullName -Tail 100 -ErrorAction SilentlyContinue | Write-Host
           }
           exit $process.ExitCode
         }
