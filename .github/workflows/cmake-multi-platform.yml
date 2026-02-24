@@ -123,7 +123,7 @@ jobs:
     - name: Install Vulkan SDK (Windows)
       if: matrix.os == 'windows-latest'
       shell: pwsh
-      timeout-minutes: 10
+      timeout-minutes: 1
       run: |
         # Check if Vulkan SDK is already installed (from cache or previous installation)
         $vulkanBase = "C:\Program Files\VulkanSDK"
@@ -160,7 +160,7 @@ jobs:
         Write-Host "Downloading Vulkan SDK $vulkanVersion..."
         try {
           $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -Uri $vulkanUrl -OutFile $installerPath -ErrorAction Stop -TimeoutSec 300
+          Invoke-WebRequest -Uri $vulkanUrl -OutFile $installerPath -ErrorAction Stop -TimeoutSec 30
         } catch {
           Write-Warning "Failed to download Vulkan SDK: $_"
           Write-Host "Skipping Vulkan SDK installation - Vulkan backend will be disabled"
@@ -175,8 +175,8 @@ jobs:
           return $process.ExitCode
         } -ArgumentList $installerPath
         
-        # Wait for installation with timeout (5 minutes)
-        $result = Wait-Job -Job $job -Timeout 300
+        # Wait for installation with timeout (0.5 minutes)
+        $result = Wait-Job -Job $job -Timeout 30
         if ($result) {
           $exitCode = Receive-Job -Job $job
           Remove-Job -Job $job
