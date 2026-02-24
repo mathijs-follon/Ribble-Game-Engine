@@ -11,14 +11,8 @@
 // So we check both __cplusplus and MSVC version (19.30+ supports C++23)
 // MSVC 19.44 (version 1944) definitely supports C++23 and std::expected
 #if __cplusplus >= 202302L || (defined(_MSC_VER) && _MSC_VER >= 1930 && defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || (defined(_MSC_VER) && _MSC_VER >= 1940)
-    // Try to include <expected> - it should be available in C++23
-    // Some standard libraries may have it even if the feature test macro isn't defined
     #include <expected>
-    // Verify that std::expected actually exists
     #ifndef __cpp_lib_expected
-        // If the feature test macro isn't defined, we still try to use it
-        // This handles cases where the compiler supports it but the macro isn't set
-        // We'll let the compiler error if std::expected truly doesn't exist
     #endif
 #else
     #error "std::expected requires C++23. Please set CMAKE_CXX_STANDARD to 23 and ensure your compiler supports C++23."
