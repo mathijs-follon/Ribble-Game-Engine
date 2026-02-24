@@ -17,6 +17,23 @@ add_executable(RibbleEditor
     source/editor/panels/asset_browser_panel.cpp
     source/editor/panels/project_dialog_panel.cpp
     source/editor/panels/profiler_panel.cpp
+    include/ribble/editor/panels/asset_browser_panel.h
+    include/ribble/editor/panels/hierarchy_panel.h
+    include/ribble/editor/panels/inspector_panel.h
+    include/ribble/editor/panels/profiler_panel.h
+    include/ribble/editor/panels/project_dialog_panel.h
+    include/ribble/editor/panels/viewport_panel.h
+    include/ribble/editor/editor_application.h
+    include/ribble/editor/editor_command.h
+    include/ribble/editor/editor_config.h
+    include/ribble/editor/editor_panel.h
+    include/ribble/editor/editor_state.h
+    include/ribble/editor/editor_window.h
+    include/ribble/editor/project.h
+    include/ribble/editor/project_manager.h
+    include/ribble/editor/scene_editor.h
+    include/ribble/editor/view_manager.h
+    include/ribble/editor.h
 )
 
 target_include_directories(RibbleEditor PRIVATE
