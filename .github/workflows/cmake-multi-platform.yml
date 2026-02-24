@@ -259,7 +259,31 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      shell: pwsh
+      run: |
+        $buildDir = "${{ steps.strings.outputs.build-output-dir }}"
+        $config = "${{ matrix.build_type }}"
+        
+        Write-Host "Building with configuration: $config"
+        Write-Host "Build directory: $buildDir"
+        
+        # Build with verbose output to see errors
+        $buildResult = cmake --build $buildDir --config $config --verbose 2>&1
+        $exitCode = $LASTEXITCODE
+        
+        # Output the build result
+        Write-Host $buildResult
+        
+        if ($exitCode -ne 0) {
+          Write-Host "Build failed with exit code: $exitCode"
+          Write-Host "Checking for error logs..."
+          # Try to find error details
+          Get-ChildItem -Path $buildDir -Recurse -Filter "*.log" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "Log file: $($_.FullName)"
+            Get-Content $_.FullName -Tail 50 -ErrorAction SilentlyContinue
+          }
+          exit $exitCode
+        }
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
