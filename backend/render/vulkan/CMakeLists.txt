@@ -1,6 +1,7 @@
 # Vulkan render backend module
 
-find_package(Vulkan REQUIRED)
+find_package(Vulkan QUIET)
+if(Vulkan_FOUND)
 
 add_library(ribble_backend_vulkan STATIC
     vulkan_backend.cpp
@@ -38,3 +39,6 @@ target_link_libraries(ribble_backend_vulkan PUBLIC
 )
 
 target_compile_features(ribble_backend_vulkan PUBLIC cxx_std_23)
+else()
+    message(STATUS "Vulkan not found - Vulkan backend will be skipped")
+endif()
