@@ -2,10 +2,16 @@
 
 #include "logger.h"
 
-#include <expected>
 #include <string>
 #include <ribble/util/enum.h>
 #include <utility>
+
+// Check for std::expected support (C++23 feature)
+#if defined(__cpp_lib_expected) || (__cplusplus >= 202302L)
+    #include <expected>
+#else
+    #error "std::expected is not available. This requires C++23 with a standard library that supports std::expected. Please use a compiler with full C++23 support (GCC 13+, Clang 17+, MSVC 19.30+)."
+#endif
 
 namespace ribble::core {
 
