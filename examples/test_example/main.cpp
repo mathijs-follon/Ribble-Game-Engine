@@ -1,7 +1,6 @@
 #include <expected>
 #include <ribble.h>
 
-#include "ribble/core/fail.h"
 
 using namespace ribble::core;
 using namespace ribble;
