@@ -59,9 +59,28 @@ jobs:
           libxi-dev \
           libvulkan-dev \
           vulkan-tools
-        # Install libc++ for Clang to get better C++23 support (including std::expected)
-        if [ "${{ matrix.c_compiler }}" == "clang" ]; then
-          sudo apt-get install -y libc++-dev libc++abi-dev
+        
+        # Install newer compilers that support std::expected
+        if [ "${{ matrix.c_compiler }}" == "gcc" ]; then
+          # Install GCC 14 which has better C++23 and std::expected support
+          # Try GCC 14 first, fall back to GCC 13 if not available
+          if sudo apt-get install -y gcc-14 g++-14 2>/dev/null; then
+            echo "Installed GCC 14"
+          else
+            echo "GCC 14 not available, trying GCC 13..."
+            sudo apt-get install -y gcc-13 g++-13
+          fi
+        elif [ "${{ matrix.c_compiler }}" == "clang" ]; then
+          # Install Clang 18+ and libc++ for better C++23 support (including std::expected)
+          # Try Clang 18 first, fall back to Clang 17 if not available
+          if sudo apt-get install -y clang-18 libc++-18-dev libc++abi-18-dev 2>/dev/null; then
+            echo "Installed Clang 18"
+          else
+            echo "Clang 18 not available, trying Clang 17..."
+            sudo apt-get install -y clang-17 libc++-17-dev libc++abi-17-dev || \
+            sudo apt-get install -y clang-16 libc++-16-dev libc++abi-16-dev || \
+            sudo apt-get install -y libc++-dev libc++abi-dev
+          fi
         fi
 
     - name: Install Vulkan SDK (Windows)
@@ -124,15 +143,46 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       shell: bash
       run: |
+        # Determine compiler paths based on version (try newer versions first)
+        if [ "${{ matrix.c_compiler }}" == "gcc" ]; then
+          if command -v gcc-14 &> /dev/null; then
+            C_COMPILER="gcc-14"
+            CXX_COMPILER="g++-14"
+          elif command -v gcc-13 &> /dev/null; then
+            C_COMPILER="gcc-13"
+            CXX_COMPILER="g++-13"
+          else
+            C_COMPILER="gcc"
+            CXX_COMPILER="g++"
+          fi
+        elif [ "${{ matrix.c_compiler }}" == "clang" ]; then
+          if command -v clang-18 &> /dev/null; then
+            C_COMPILER="clang-18"
+            CXX_COMPILER="clang++-18"
+          elif command -v clang-17 &> /dev/null; then
+            C_COMPILER="clang-17"
+            CXX_COMPILER="clang++-17"
+          elif command -v clang-16 &> /dev/null; then
+            C_COMPILER="clang-16"
+            CXX_COMPILER="clang++-16"
+          else
+            C_COMPILER="clang"
+            CXX_COMPILER="clang++"
+          fi
+        else
+          C_COMPILER="${{ matrix.c_compiler }}"
+          CXX_COMPILER="${{ matrix.cpp_compiler }}"
+        fi
+        
         # Check compiler version for debugging
         echo "Compiler versions:"
-        "${{ matrix.c_compiler }}" --version || true
-        "${{ matrix.cpp_compiler }}" --version || true
+        $C_COMPILER --version || true
+        $CXX_COMPILER --version || true
         
         CMAKE_ARGS=(
           -B "${{ steps.strings.outputs.build-output-dir }}"
-          -DCMAKE_CXX_COMPILER="${{ matrix.cpp_compiler }}"
-          -DCMAKE_C_COMPILER="${{ matrix.c_compiler }}"
+          -DCMAKE_CXX_COMPILER="$CXX_COMPILER"
+          -DCMAKE_C_COMPILER="$C_COMPILER"
           -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}"
           -DCMAKE_CXX_STANDARD=23
           -DCMAKE_CXX_STANDARD_REQUIRED=ON
@@ -144,7 +194,7 @@ jobs:
           CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-stdlib=libc++ -std=c++23")
           CMAKE_ARGS+=(-DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi")
         else
-          # For GCC, explicitly set C++23 flag to ensure it's used
+          # For GCC 14, explicitly set C++23 flag
           CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-std=c++23")
         fi
         cmake "${CMAKE_ARGS[@]}"
