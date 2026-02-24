@@ -124,6 +124,11 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       shell: bash
       run: |
+        # Check compiler version for debugging
+        echo "Compiler versions:"
+        "${{ matrix.c_compiler }}" --version || true
+        "${{ matrix.cpp_compiler }}" --version || true
+        
         CMAKE_ARGS=(
           -B "${{ steps.strings.outputs.build-output-dir }}"
           -DCMAKE_CXX_COMPILER="${{ matrix.cpp_compiler }}"
@@ -134,10 +139,13 @@ jobs:
           -DCMAKE_CXX_EXTENSIONS=OFF
           -S "${{ github.workspace }}"
         )
-        # Use libc++ with Clang for better C++23 support
+        # Use libc++ with Clang for better C++23 support (including std::expected)
         if [ "${{ matrix.c_compiler }}" == "clang" ]; then
-          CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-stdlib=libc++")
+          CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-stdlib=libc++ -std=c++23")
           CMAKE_ARGS+=(-DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi")
+        else
+          # For GCC, explicitly set C++23 flag to ensure it's used
+          CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-std=c++23")
         fi
         cmake "${CMAKE_ARGS[@]}"
 

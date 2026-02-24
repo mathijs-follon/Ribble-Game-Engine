@@ -7,10 +7,18 @@
 #include <utility>
 
 // Check for std::expected support (C++23 feature)
-#if defined(__cpp_lib_expected) || (__cplusplus >= 202302L)
+#if __cplusplus >= 202302L
+    // Try to include <expected> - it should be available in C++23
+    // Some standard libraries may have it even if the feature test macro isn't defined
     #include <expected>
+    // Verify that std::expected actually exists
+    #ifndef __cpp_lib_expected
+        // If the feature test macro isn't defined, we still try to use it
+        // This handles cases where the compiler supports it but the macro isn't set
+        // We'll let the compiler error if std::expected truly doesn't exist
+    #endif
 #else
-    #error "std::expected is not available. This requires C++23 with a standard library that supports std::expected. Please use a compiler with full C++23 support (GCC 13+, Clang 17+, MSVC 19.30+)."
+    #error "std::expected requires C++23. Please set CMAKE_CXX_STANDARD to 23 and ensure your compiler supports C++23."
 #endif
 
 namespace ribble::core {
