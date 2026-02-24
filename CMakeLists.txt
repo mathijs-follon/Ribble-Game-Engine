@@ -3,10 +3,22 @@ project(Ribble)
 
 set(CMAKE_CXX_STANDARD 23)
 
+# Setup spdlog for logging
+include(FetchContent)
+# Configure spdlog to build as a shared library to avoid TLS issues when linking into shared libraries
+set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build spdlog as a shared library" FORCE)
+set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "Build spdlog examples" FORCE)
+set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Build spdlog tests" FORCE)
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.13.0
+)
+FetchContent_MakeAvailable(spdlog)
+
 # Setup doctest for testing
 find_package(doctest QUIET)
 if(NOT doctest_FOUND)
-    include(FetchContent)
     # Set policy to allow deprecated FetchContent_Populate
     if(POLICY CMP0169)
         cmake_policy(SET CMP0169 OLD)
@@ -55,7 +67,6 @@ endif()
 add_library(Ribble SHARED
         include/ribble.h
         source/ribble.cpp
-        examples/test_example/main.cpp
         include/ribble/window/window.h
         include/ribble/scene/component/audio_listener.h
         include/ribble/scene/component/audio_source.h
@@ -135,7 +146,7 @@ add_library(Ribble SHARED
         include/ribble/audio/audio_source_high_level.h
         include/ribble/core/config.h
         include/ribble/core/engine.h
-        include/ribble/core/error.h
+        include/ribble/core/fail.h
         include/ribble/core/event.h
         include/ribble/core/logger.h
         include/ribble/core/math.h
@@ -182,7 +193,7 @@ add_library(Ribble SHARED
         source/audio/audio_source_high_level.cpp
         source/core/config.cpp
         source/core/engine.cpp
-        source/core/error.cpp
+        source/core/fail.cpp
         source/core/event.cpp
         source/core/logger.cpp
         source/input/gamepad.cpp
@@ -288,6 +299,8 @@ target_include_directories(Ribble PUBLIC
 
 target_include_directories(Ribble PRIVATE
 )
+
+target_link_libraries(Ribble PUBLIC spdlog::spdlog)
 
 if(UNIX)
     target_link_libraries(Ribble PUBLIC dl)

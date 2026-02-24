@@ -1,1 +1,3 @@
-// TODO: Main Engine header file - includes all ribble classes
+#pragma once
+
+#include <ribble/core/logger.h>

@@ -12,6 +12,11 @@ target_link_libraries(TestExample PRIVATE
     Ribble
 )
 
+# explicitly compile ribble with RIBBLE_DEBUG for debugging log statements!
+target_compile_definitions(Ribble
+        PUBLIC RIBBLE_DEBUG
+)
+
 if(UNIX)
     target_link_libraries(TestExample PRIVATE dl)
 endif()
