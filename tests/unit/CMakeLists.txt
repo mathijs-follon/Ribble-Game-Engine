@@ -7,6 +7,7 @@ add_executable(ribble_unit_tests
     test_vulkan_backend.cpp
     test_dx12_backend.cpp
     test_metal_backend.cpp
+    test_config.cpp
 )
 
 target_include_directories(ribble_unit_tests PRIVATE
