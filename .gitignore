@@ -1,68 +1,59 @@
+# Build directories
 build/
-build-*/
-cmake-build-*/
 out/
+bin/
+lib/
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
 
+# CMake
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
-CTestTestfile.cmake
+install_manifest.txt
 compile_commands.json
+*.cmake
+!CMakeLists.txt
+.cmake/
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Compiled files
 *.o
 *.obj
-*.lo
-*.a
-*.lib
-*.so
-*.so.*
-*.dylib
-*.dll
 *.exe
 *.out
 *.app
 
-*.gch
-*.pch
-
+# Debug files
 *.dSYM/
-*.su
-*.idb
 *.pdb
-*.prof
-*.gcda
-*.gcno
-*.gcov
-vgcore.*
 
-.vscode/
-.idea/
-*.swp
-*.swo
-*.swn
-*.bak
+# Dependencies
+_deps/
+third_party/
+
+# Editor backups
 *~
-.DS_Store
+*.bak
+*.tmp
+
+# OS files
 Thumbs.db
-
-Testing/
-test_results/
-*.log
-
-docs/html/
-docs/latex/
-docs/build/
-
-.env
-.env.*
-*.local
-
 .DS_Store
-.AppleDouble
-.LSOverride
-ehthumbs.db
-Desktop.ini
-
-ribble/lib/**/build/
-ribble/lib/**/out/
 
