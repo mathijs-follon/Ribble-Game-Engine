@@ -300,6 +300,11 @@ jobs:
           "-S", "${{ github.workspace }}"
         )
         
+        # For MSVC, we need to ensure __cplusplus is set correctly
+        # /Zc:__cplusplus makes __cplusplus reflect the actual standard version
+        # MSVC 19.44 supports C++23 with /std:c++latest, but we need /Zc:__cplusplus for proper detection
+        $cmakeArgs += "-DCMAKE_CXX_FLAGS=/Zc:__cplusplus"
+        
         # If Vulkan SDK is not set, make Vulkan backend optional
         if (-not $env:VULKAN_SDK) {
           Write-Host "Vulkan SDK not found - Vulkan backend will be optional"
@@ -319,21 +324,42 @@ jobs:
         Write-Host "Build directory: $buildDir"
         
         # Build with verbose output to see errors
-        $buildResult = cmake --build $buildDir --config $config --verbose 2>&1
-        $exitCode = $LASTEXITCODE
+        # Capture both stdout and stderr, and ensure we see all output
+        $ErrorActionPreference = "Continue"
+        $buildOutput = @()
         
-        # Output the build result
-        Write-Host $buildResult
+        # Use Start-Process to capture all output properly
+        $process = Start-Process -FilePath "cmake" -ArgumentList @(
+          "--build", $buildDir,
+          "--config", $config,
+          "--verbose"
+        ) -NoNewWindow -Wait -PassThru -RedirectStandardOutput "build_output.txt" -RedirectStandardError "build_errors.txt"
         
-        if ($exitCode -ne 0) {
-          Write-Host "Build failed with exit code: $exitCode"
+        # Display the output
+        if (Test-Path "build_output.txt") {
+          Write-Host "=== Build Output ==="
+          Get-Content "build_output.txt" | Write-Host
+        }
+        
+        if (Test-Path "build_errors.txt") {
+          Write-Host "=== Build Errors ==="
+          Get-Content "build_errors.txt" | Write-Host
+        }
+        
+        if ($process.ExitCode -ne 0) {
+          Write-Host "Build failed with exit code: $($process.ExitCode)"
           Write-Host "Checking for error logs..."
-          # Try to find error details
+          # Try to find error details in build directory
           Get-ChildItem -Path $buildDir -Recurse -Filter "*.log" -ErrorAction SilentlyContinue | ForEach-Object {
-            Write-Host "Log file: $($_.FullName)"
-            Get-Content $_.FullName -Tail 50 -ErrorAction SilentlyContinue
+            Write-Host "=== Log file: $($_.FullName) ==="
+            Get-Content $_.FullName -Tail 100 -ErrorAction SilentlyContinue | Write-Host
           }
-          exit $exitCode
+          # Also check for MSBuild log files
+          Get-ChildItem -Path $buildDir -Recurse -Filter "*.tlog" -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object {
+            Write-Host "=== TLog file: $($_.FullName) ==="
+            Get-Content $_.FullName -Tail 50 -ErrorAction SilentlyContinue | Write-Host
+          }
+          exit $process.ExitCode
         }
 
     - name: Test

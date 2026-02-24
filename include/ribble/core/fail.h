@@ -7,7 +7,10 @@
 #include <utility>
 
 // Check for std::expected support (C++23 feature)
-#if __cplusplus >= 202302L
+// MSVC with /std:c++latest may not set __cplusplus correctly without /Zc:__cplusplus
+// So we check both __cplusplus and MSVC version (19.30+ supports C++23)
+// MSVC 19.44 (version 1944) definitely supports C++23 and std::expected
+#if __cplusplus >= 202302L || (defined(_MSC_VER) && _MSC_VER >= 1930 && defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || (defined(_MSC_VER) && _MSC_VER >= 1940)
     // Try to include <expected> - it should be available in C++23
     // Some standard libraries may have it even if the feature test macro isn't defined
     #include <expected>
