@@ -2,6 +2,9 @@
 #include <functional>
 #include <memory>
 #include <typeindex>
+#include <unordered_map>
+#include <vector>
+#include <queue>
 
 #include "fail.h"
 
@@ -133,6 +136,8 @@ namespace ribble::core {
         void clear();
         void clear(std::type_index eventType);
 
+        void process_queue();
+
         void set_enabled(bool enabled) { m_enabled = enabled; }
         [[nodiscard]] bool is_enabled() const { return m_enabled; }
 
@@ -142,10 +147,16 @@ namespace ribble::core {
             int priority;
         };
 
+        struct QueuedEvent {
+            std::type_index eventType;
+            std::shared_ptr<Event> event;
+        };
+
         static void sort_listeners(std::vector<ListenerEntry>& listeners);
         static void invoke_listeners(const std::vector<ListenerEntry>& listeners, const std::shared_ptr<Event>& event);
 
         std::unordered_map<std::type_index, std::vector<ListenerEntry>> m_listeners;
+        std::queue<QueuedEvent> m_eventQueue;
         bool m_enabled{true};
     };
 
