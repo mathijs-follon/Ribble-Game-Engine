@@ -89,9 +89,12 @@ namespace ribble::core {
             return;
         }
 
-        // For queued dispatch, we'll process immediately but could be extended
-        // to use a queue for deferred processing
-        dispatch_immediate(eventType, event);
+        const QueuedEvent queuedEvent {
+            .eventType = eventType,
+            .event = event
+        };
+
+        m_eventQueue.push(queuedEvent);
     }
 
     void EventBus::dispatch_immediate(std::type_index eventType, const std::shared_ptr<Event>& event) {
@@ -125,11 +128,19 @@ namespace ribble::core {
         m_listeners.erase(eventType);
     }
 
+    void EventBus::process_queue() {
+        while (!m_eventQueue.empty()) {
+            QueuedEvent queuedEvent = m_eventQueue.front();
+            m_eventQueue.pop();
+            dispatch_immediate(queuedEvent.eventType, queuedEvent.event);
+        }
+    }
+
     void EventBus::sort_listeners(std::vector<ListenerEntry>& listeners) {
         std::ranges::sort(listeners,
-                          [](const ListenerEntry& a, const ListenerEntry& b) {
-                              return a.priority > b.priority;
-                          });
+          [](const ListenerEntry& a, const ListenerEntry& b) {
+              return a.priority > b.priority;
+          });
     }
 
     void EventBus::invoke_listeners(const std::vector<ListenerEntry>& listeners, const std::shared_ptr<Event>& event) {
