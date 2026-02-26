@@ -14,7 +14,7 @@ namespace ribble::core {
         };
 
         struct Window {
-            const char* windowTitle{"Ribble Window"};
+            const char *windowTitle{"Ribble Window"};
             int windowWidth{1024};
             int windowHeight{768};
 
@@ -28,7 +28,7 @@ namespace ribble::core {
 
     class EngineContext {
     public:
-        EngineContext(const EngineContextSettings& engineContextSettings);
+        EngineContext(const EngineContextSettings &engineContextSettings);
         ~EngineContext() = default;
 
         [[nodiscard]] const EngineContextSettings &settings() const { return m_settings; }
@@ -67,7 +67,7 @@ namespace ribble::core {
         Engine(Engine &&other) noexcept = default;
         Engine &operator=(Engine &&other) noexcept = default;
 
-        [[nodiscard]] Result<void, Failure> initialize(const EngineContextSettings& engineContextSettings);
+        [[nodiscard]] Result<void, Failure> initialize(const EngineContextSettings &engineContextSettings);
 
         Result<void, Engine::Failure> create_window();
         Result<void, Engine::Failure> create_window(int width, int height, const char *title);

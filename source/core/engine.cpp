@@ -57,11 +57,11 @@ namespace ribble::core {
         }
     }
 
-    EngineContext::EngineContext(const EngineContextSettings& engineContextSettings) :
-        m_settings{engineContextSettings},
-        m_timeManager{std::make_unique<TimeManager>()},
+    EngineContext::EngineContext(const EngineContextSettings &engineContextSettings) :
+        m_settings{engineContextSettings}, m_timeManager{std::make_unique<TimeManager>()},
         m_windowContext{std::make_unique<window::WindowContext>(engineContextSettings.graphics.windowBackend)},
-        m_renderer{create_renderer(engineContextSettings.graphics.windowBackend, engineContextSettings.graphics.renderBackend)} {
+        m_renderer{create_renderer(engineContextSettings.graphics.windowBackend,
+                                   engineContextSettings.graphics.renderBackend)} {
         m_timeManager->frame().set_target_fps(static_cast<float>(engineContextSettings.window.targetFPS));
         m_timeManager->frame().set_limiting(engineContextSettings.window.limitingFPS);
     }
@@ -72,7 +72,7 @@ namespace ribble::core {
 
     Engine::~Engine() = default;
 
-    Result<void, Engine::Failure> Engine::initialize(const EngineContextSettings& engineContextSettings) {
+    Result<void, Engine::Failure> Engine::initialize(const EngineContextSettings &engineContextSettings) {
         if (m_initialized) {
             return Fail(RIBBLE_WARN(Failure::AlreadyInitialized,
                                     "You are trying to initialize the engine multiple times."));
@@ -87,7 +87,7 @@ namespace ribble::core {
     }
 
     Result<void, Engine::Failure> Engine::create_window() {
-        const auto& win = context().settings().window;
+        const auto &win = context().settings().window;
         return create_window(win.windowWidth, win.windowHeight, win.windowTitle);
     }
 
