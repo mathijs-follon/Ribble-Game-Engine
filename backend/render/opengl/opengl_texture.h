@@ -3,7 +3,7 @@
 #include <ribble/core/fail.h>
 #include "backend_types.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     struct TextureDesc {
         int width{1};
@@ -32,7 +32,7 @@ namespace ribble::backend::opengl {
         OpenGLTexture(OpenGLTexture &&) noexcept;
         OpenGLTexture &operator=(OpenGLTexture &&) noexcept;
 
-        core::Result<void, Failure> create(const TextureDesc &desc);
+        ribble::core::Result<void, Failure> create(const TextureDesc &desc);
         void destroy();
 
         void bind(int unit = 0) const;
@@ -42,7 +42,25 @@ namespace ribble::backend::opengl {
         void upload(const void *data, int level = 0);
 
         /// Resize — destroys and re-creates the texture
-        core::Result<void, Failure> resize(int width, int height);
+        ribble::core::Result<void, Failure> resize(int width, int height);
+
+        /// Load texture from file (uses stb_image)
+        /// @param filepath Path to image file
+        /// @param generateMipmaps Whether to generate mipmaps
+        static ribble::core::Result<OpenGLTexture, Failure> load_from_file(const std::string &filepath,
+                                                                           bool generateMipmaps = true);
+
+        /// Set texture wrap mode
+        void set_wrap_mode(TextureWrap wrapS, TextureWrap wrapT);
+
+        /// Set texture filter mode
+        void set_filter_mode(TextureFilter minFilter, TextureFilter magFilter);
+
+        /// Set border color (for ClampToBorder wrap mode)
+        void set_border_color(float r, float g, float b, float a);
+
+        /// Generate mipmaps
+        void generate_mipmaps();
 
         [[nodiscard]] GLuint id() const { return m_id; }
         [[nodiscard]] int width() const { return m_desc.width; }
@@ -55,4 +73,4 @@ namespace ribble::backend::opengl {
         TextureDesc m_desc{};
     };
 
-} // namespace ribble::backend::opengl
+} // namespace backend

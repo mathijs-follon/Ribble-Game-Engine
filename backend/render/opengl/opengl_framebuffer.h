@@ -5,7 +5,7 @@
 #include "backend_types.h"
 #include "opengl_texture.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     struct FramebufferAttachment {
         TextureFormat format{TextureFormat::RGBA8};
@@ -33,8 +33,8 @@ namespace ribble::backend::opengl {
         OpenGLFramebuffer(OpenGLFramebuffer &&) noexcept;
         OpenGLFramebuffer &operator=(OpenGLFramebuffer &&) noexcept;
 
-        core::Result<void, Failure> create(const FramebufferDesc &desc);
-        core::Result<void, Failure> resize(int width, int height);
+        ribble::core::Result<void, Failure> create(const FramebufferDesc &desc);
+        ribble::core::Result<void, Failure> resize(int width, int height);
         void destroy();
 
         void bind() const;
@@ -54,4 +54,4 @@ namespace ribble::backend::opengl {
         OpenGLTexture m_depthTexture;
     };
 
-} // namespace ribble::backend::opengl
+} // namespace backend

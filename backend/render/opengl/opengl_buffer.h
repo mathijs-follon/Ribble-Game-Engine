@@ -3,7 +3,7 @@
 #include <ribble/core/fail.h>
 #include "backend_types.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     class OpenGLBuffer {
     public:
@@ -20,7 +20,8 @@ namespace ribble::backend::opengl {
         OpenGLBuffer(OpenGLBuffer &&) noexcept;
         OpenGLBuffer &operator=(OpenGLBuffer &&) noexcept;
 
-        core::Result<void, Failure> create(BufferType type, BufferUsage usage, const void *data, size_t sizeBytes);
+        ribble::core::Result<void, Failure> create(BufferType type, BufferUsage usage, const void *data,
+                                                   size_t sizeBytes);
 
         /// Resize or replace all data (re-allocates GPU buffer)
         void upload(const void *data, size_t sizeBytes);
@@ -79,4 +80,4 @@ namespace ribble::backend::opengl {
         GLuint m_id{0};
     };
 
-} // namespace ribble::backend::opengl
+} // namespace backend

@@ -5,11 +5,11 @@ namespace ribble::window {
 
     class WindowContext {
     public:
-        explicit WindowContext(backend::WindowBackendType type);
+        explicit WindowContext(::backend::WindowBackendType type);
         ~WindowContext() = default;
 
-        backend::WindowBackend *backend() { return m_windowBackend.get(); }
-        [[nodiscard]] const backend::WindowBackend *backend() const { return m_windowBackend.get(); }
+        ::backend::WindowBackend *backend() { return m_windowBackend.get(); }
+        [[nodiscard]] const ::backend::WindowBackend *backend() const { return m_windowBackend.get(); }
         std::shared_ptr<core::EventBus> event_bus() { return m_windowEventBus; }
         [[nodiscard]] bool should_close() const { return m_shouldClose; }
         [[nodiscard]] bool is_minimized() const { return m_isMinimized; }
@@ -22,7 +22,7 @@ namespace ribble::window {
         }
 
     private:
-        std::unique_ptr<backend::WindowBackend> m_windowBackend;
+        std::unique_ptr<::backend::WindowBackend> m_windowBackend;
         std::shared_ptr<core::EventBus> m_windowEventBus;
         int m_framebufferWidth{0};
         int m_framebufferHeight{0};

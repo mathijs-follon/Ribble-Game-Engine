@@ -6,37 +6,39 @@
 
 #include "ribble/core/event.h"
 
-namespace ribble::backend {
+namespace backend {
 
     enum class WindowBackendType {
         SDL3,
-        GLFW, // TODO
-        // ... others here
+        X11,
+        GLFW,
     };
 
     class WindowBackend {
     public:
         enum class Failure { InitializationFailure, ShutdownFailure };
-        WindowBackend(std::shared_ptr<core::EventBus> windowEventBus) : m_windowEventBus{std::move(windowEventBus)} {}
+        WindowBackend(std::shared_ptr<ribble::core::EventBus> windowEventBus) :
+            m_windowEventBus{std::move(windowEventBus)} {}
         virtual ~WindowBackend() = default;
 
-        virtual core::Result<void, Failure> initialize(int width, int height, const char *title) {
+        virtual ribble::core::Result<void, Failure> initialize(int width, int height, const char *title) {
             RIBBLE_LOG_INFO("Initializing window.");
-            return core::Ok();
+            return ribble::core::Ok();
         }
-        virtual core::Result<void, Failure> poll_events() = 0;
-        virtual core::Result<void, Failure> shutdown() {
+        virtual ribble::core::Result<void, Failure> poll_events() = 0;
+        virtual ribble::core::Result<void, Failure> shutdown() {
             RIBBLE_LOG_INFO("Closing window.");
-            return core::Ok();
+            return ribble::core::Ok();
         }
         [[nodiscard]] virtual void *native_handle() const = 0;
 
     protected:
-        std::shared_ptr<core::EventBus> m_windowEventBus;
+        std::shared_ptr<ribble::core::EventBus> m_windowEventBus;
     };
 
-} // namespace ribble::backend
+} // namespace backend
 
-RIBBLE_ENUM_TO_STRING(
-        ribble::backend::WindowBackend::Failure,
-        case ribble::backend::WindowBackend::Failure::InitializationFailure : return "Initialization Failure";);
+using WindowBackendFailure = backend::WindowBackend::Failure;
+
+RIBBLE_ENUM_TO_STRING(WindowBackendFailure,
+                      case WindowBackendFailure::InitializationFailure : return "Initialization Failure";);

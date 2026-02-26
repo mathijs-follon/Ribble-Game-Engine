@@ -2,7 +2,7 @@
 #include <cstring>
 #include "opengl_conversions.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     void OpenGLState::set_viewport(const Viewport &vp) {
         if (m_cache.viewport.x == vp.x && m_cache.viewport.y == vp.y && m_cache.viewport.width == vp.width &&
@@ -132,6 +132,13 @@ namespace ribble::backend::opengl {
         glFrontFace(order == WindingOrder::Clockwise ? GL_CW : GL_CCW);
     }
 
+    void OpenGLState::set_program_point_size(bool enabled) {
+        if (m_cache.programPointSize == enabled)
+            return;
+        m_cache.programPointSize = enabled;
+        enabled ? glEnable(GL_PROGRAM_POINT_SIZE) : glDisable(GL_PROGRAM_POINT_SIZE);
+    }
+
     // ── Bindings ──────────────────────────────────────────────────────────────
 
     void OpenGLState::bind_vao(GLuint vao) {
@@ -196,4 +203,4 @@ namespace ribble::backend::opengl {
         m_dirty = false;
     }
 
-} // namespace ribble::backend::opengl
+} // namespace backend

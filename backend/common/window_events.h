@@ -1,8 +1,8 @@
 #pragma once
 #include "ribble/core/event.h"
 
+namespace backend {
 
-namespace ribble::backend {
     enum class KeyboardKey {
         Space,
         Apostrophe,
@@ -188,7 +188,7 @@ namespace ribble::backend {
     } // namespace detail
 
     template<typename Derived>
-    class WindowEvent : public core::Event {
+    class WindowEvent : public ribble::core::Event {
     public:
         [[nodiscard]] size_t type_id() const override { return detail::event_type_id<Derived>(); }
         [[nodiscard]] std::string type_str() const override { return Derived::static_type_str(); }
@@ -480,4 +480,5 @@ namespace ribble::backend {
         std::vector<std::string> m_paths;
         double m_x{0}, m_y{0};
     };
-} // namespace ribble::backend
+
+} // namespace backend

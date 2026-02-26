@@ -87,6 +87,7 @@ namespace ribble::core {
     }
 
     void EventBus::dispatch_immediate(std::type_index eventType, const std::shared_ptr<Event> &event) {
+
         if (!m_enabled || !event) {
             return;
         }

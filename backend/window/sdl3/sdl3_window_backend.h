@@ -4,19 +4,23 @@
 #include <utility>
 #include "../../common/window_backend.h"
 
-class SDLWindow : public ribble::backend::WindowBackend {
-public:
-    SDLWindow(std::shared_ptr<ribble::core::EventBus> windowEventBus) : WindowBackend{std::move(windowEventBus)} {}
+namespace backend {
 
-    ribble::core::Result<void, Failure> initialize(int width, int height, const char *title) override;
+    class SDLWindow : public WindowBackend {
+    public:
+        SDLWindow(std::shared_ptr<ribble::core::EventBus> windowEventBus) : WindowBackend{std::move(windowEventBus)} {}
 
-    ribble::core::Result<void, Failure> poll_events() override;
+        ribble::core::Result<void, Failure> initialize(int width, int height, const char *title) override;
 
-    ribble::core::Result<void, Failure> shutdown() override;
+        ribble::core::Result<void, Failure> poll_events() override;
 
-    [[nodiscard]] void *native_handle() const override;
+        ribble::core::Result<void, Failure> shutdown() override;
 
-private:
-    SDL_Window *m_window = nullptr;
-    bool m_shouldClose = false;
-};
+        [[nodiscard]] void *native_handle() const override;
+
+    private:
+        SDL_Window *m_window = nullptr;
+        bool m_shouldClose = false;
+    };
+
+} // namespace backend

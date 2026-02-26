@@ -1,7 +1,7 @@
 #include "opengl_buffer.h"
 #include "opengl_conversions.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     // ── OpenGLBuffer ──────────────────────────────────────────────────────────
 
@@ -24,8 +24,8 @@ namespace ribble::backend::opengl {
         return *this;
     }
 
-    core::Result<void, OpenGLBuffer::Failure> OpenGLBuffer::create(BufferType type, BufferUsage usage, const void *data,
-                                                                   size_t sizeBytes) {
+    ribble::core::Result<void, OpenGLBuffer::Failure> OpenGLBuffer::create(BufferType type, BufferUsage usage,
+                                                                           const void *data, size_t sizeBytes) {
         destroy();
         m_target = to_gl_buffer_type(type);
         m_usage = to_gl_buffer_usage(usage);
@@ -33,12 +33,12 @@ namespace ribble::backend::opengl {
 
         glGenBuffers(1, &m_id);
         if (!m_id)
-            return core::Fail(RIBBLE_ERROR(Failure::CreationFailure, "glGenBuffers failed"));
+            return ribble::core::Fail(RIBBLE_ERROR(Failure::CreationFailure, "glGenBuffers failed"));
 
         glBindBuffer(m_target, m_id);
         glBufferData(m_target, static_cast<GLsizeiptr>(sizeBytes), data, m_usage);
         glBindBuffer(m_target, 0);
-        return core::Ok();
+        return ribble::core::Ok();
     }
 
     void OpenGLBuffer::upload(const void *data, size_t sizeBytes) {
@@ -86,9 +86,11 @@ namespace ribble::backend::opengl {
 
     void OpenGLVertexArray::set_attribute(GLuint attribIndex, GLint components, GLenum glType, bool normalized,
                                           GLsizei stride, size_t offset) {
+        bind();
         glEnableVertexAttribArray(attribIndex);
         glVertexAttribPointer(attribIndex, components, glType, normalized ? GL_TRUE : GL_FALSE, stride,
                               reinterpret_cast<const void *>(offset));
+        unbind();
     }
 
     void OpenGLVertexArray::bind() const { glBindVertexArray(m_id); }
@@ -101,4 +103,4 @@ namespace ribble::backend::opengl {
         }
     }
 
-} // namespace ribble::backend::opengl
+} // namespace backend

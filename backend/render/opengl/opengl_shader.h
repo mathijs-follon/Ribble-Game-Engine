@@ -4,9 +4,11 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
+#include "../../common/shader_source.h"
 #include "backend_types.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     class OpenGLShader {
     public:
@@ -24,11 +26,17 @@ namespace ribble::backend::opengl {
         OpenGLShader(OpenGLShader &&) noexcept;
         OpenGLShader &operator=(OpenGLShader &&) noexcept;
 
-        core::Result<void, Failure> compile(ShaderStage stage, std::string_view source);
-        core::Result<void, Failure> link(std::initializer_list<GLuint> shaderIds);
+        /// Compile a shader stage from source
+        ribble::core::Result<void, Failure> compile(ShaderStage stage, std::string_view source);
+
+        /// Compile from ShaderSource (language-agnostic, but expects GLSL for OpenGL)
+        ribble::core::Result<void, Failure> compile(const ShaderSource &source);
+
+        /// Link all compiled shader stages into a program
+        ribble::core::Result<void, Failure> link();
 
         // Convenience: compile both stages and link in one call
-        core::Result<void, Failure> build(std::string_view vertexSrc, std::string_view fragmentSrc);
+        ribble::core::Result<void, Failure> build(std::string_view vertexSrc, std::string_view fragmentSrc);
 
         void bind() const;
         void unbind() const;
@@ -47,17 +55,23 @@ namespace ribble::backend::opengl {
         void set_mat4(std::string_view name, const float *data, bool transpose = false);
         void set_bool(std::string_view name, bool value);
 
+        // Array uniforms
+        void set_int_array(std::string_view name, const int *values, size_t count);
+        void set_float_array(std::string_view name, const float *values, size_t count);
+        void set_mat4_array(std::string_view name, const float *matrices, size_t count, bool transpose = false);
+
     private:
         [[nodiscard]] GLint uniform_location(std::string_view name);
+        static std::string shader_stage_to_string(ShaderStage stage);
 
         GLuint m_program{0};
+        std::vector<GLuint> m_compiledShaders; // Track compiled shaders for linking
         std::unordered_map<std::string, GLint> m_uniformCache;
     };
 
-} // namespace ribble::backend::opengl
+} // namespace backend
 
-RIBBLE_ENUM_TO_STRING(
-        ribble::backend::opengl::OpenGLShader::Failure,
-        case ribble::backend::opengl::OpenGLShader::Failure::CompilationFailure : return "Shader Compilation Failure";
-        case ribble::backend::opengl::OpenGLShader::Failure::LinkFailure : return "Shader Link Failure";
-        case ribble::backend::opengl::OpenGLShader::Failure::InvalidUniform : return "Invalid Uniform";);
+RIBBLE_ENUM_TO_STRING(backend::OpenGLShader::Failure,
+                      case backend::OpenGLShader::Failure::CompilationFailure : return "Shader Compilation Failure";
+                      case backend::OpenGLShader::Failure::LinkFailure : return "Shader Link Failure";
+                      case backend::OpenGLShader::Failure::InvalidUniform : return "Invalid Uniform";);

@@ -11,12 +11,7 @@ include(FetchContent)
 set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build spdlog as a shared library" FORCE)
 set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "Build spdlog examples" FORCE)
 set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Build spdlog tests" FORCE)
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.13.0
-)
-FetchContent_MakeAvailable(spdlog)
+add_subdirectory(lib/spdlog)
 
 # Setup doctest for testing
 find_package(doctest QUIET)
@@ -65,6 +60,7 @@ if(NOT TARGET doctest::doctest)
         add_library(doctest::doctest ALIAS doctest)
     endif()
 endif()
+
 
 add_library(Ribble SHARED
         include/ribble.h
@@ -322,16 +318,20 @@ target_include_directories(Ribble PUBLIC
 target_include_directories(Ribble PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/glad/generated/include
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/common
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb
 )
 
 target_link_libraries(Ribble PUBLIC spdlog::spdlog)
-target_link_libraries(Ribble PRIVATE SDL3::SDL3)
-
-# Link to OpenGL backend since engine.cpp includes OpenGL backend headers
-target_link_libraries(Ribble PRIVATE ribble_backend_opengl)
+target_link_libraries(Ribble PRIVATE SDL3::SDL3 glfw)
+target_link_libraries(Ribble PRIVATE ribble_backend_opengl ribble_backend_window_glfw)
+if(UNIX AND NOT APPLE)
+    target_compile_definitions(Ribble PRIVATE RIBBLE_HAS_X11)
+    target_link_libraries(Ribble PRIVATE ribble_backend_window_x11)
+endif()
 
 if(UNIX)
     target_link_libraries(Ribble PUBLIC dl)
+    target_link_options(Ribble PRIVATE -Wl,--allow-multiple-definition)
 endif()
 
 

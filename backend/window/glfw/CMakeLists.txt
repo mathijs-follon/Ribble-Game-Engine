@@ -30,7 +30,7 @@ if(GLFW_TARGET)
 
     target_include_directories(ribble_backend_window_glfw PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-            ../../../include/ribble/backend
+        ../../../include
         ${GLFW_INCLUDE_DIR}
     )
 
@@ -40,6 +40,11 @@ if(GLFW_TARGET)
     )
 
     target_compile_features(ribble_backend_window_glfw PUBLIC cxx_std_23)
+
+    # Enable Position Independent Code so this static library can be linked into shared libraries
+    set_target_properties(ribble_backend_window_glfw PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+    )
 else()
     add_library(ribble_backend_window_glfw INTERFACE)
     message(WARNING "GLFW not found, GLFW window backend will not be available")

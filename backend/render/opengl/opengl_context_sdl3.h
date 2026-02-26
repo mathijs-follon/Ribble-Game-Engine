@@ -3,42 +3,64 @@
 #include <glad/gl.h>
 #include "opengl_context.h"
 
-namespace ribble::backend::opengl {
-
+namespace backend {
     class OpenGLContextSDL3 final : public OpenGLContext {
     public:
         ~OpenGLContextSDL3() override { destroy(); }
 
-        core::Result<void, RenderBackend::Failure> create(void *nativeWindowHandle) override {
-            m_window = static_cast<SDL_Window *>(nativeWindowHandle);
+        ribble::core::Result<void, RenderBackend::Failure>
+        create(ribble::window::WindowContext &windowContext) override {
+            m_window = static_cast<SDL_Window *>(windowContext.backend()->native_handle());
 
             if (!m_window) {
-                return core::Fail(
+                return ribble::core::Fail(
                         RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure, "Invalid window handle provided"));
             }
 
-            // OpenGL attributes should already be set before window creation
-            // Just create the context from the existing window
             m_glContext = SDL_GL_CreateContext(m_window);
             if (!m_glContext)
-                return core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
-                                               "SDL_GL_CreateContext failed: {}", SDL_GetError()));
+                return ribble::core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
+                                                       "SDL_GL_CreateContext failed: {}", SDL_GetError()));
 
             // Make the context current
             if (!SDL_GL_MakeCurrent(m_window, m_glContext)) {
                 SDL_GL_DestroyContext(m_glContext);
                 m_glContext = nullptr;
-                return core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
-                                               "SDL_GL_MakeCurrent failed: {}", SDL_GetError()));
+                return ribble::core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
+                                                       "SDL_GL_MakeCurrent failed: {}", SDL_GetError()));
             }
 
             // Load OpenGL function pointers using GLAD
             if (!gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress)))
-                return core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
-                                               "gladLoadGL failed — could not load OpenGL function pointers"));
+                return ribble::core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
+                                                       "gladLoadGL failed — could not load OpenGL function pointers"));
+
+            {
+                int w = 0, h = 0;
+                if (!SDL_GetWindowSizeInPixels(m_window, &w, &h)) {
+                    SDL_GetWindowSize(m_window, &w, &h);
+                }
+                glViewport(0, 0, w, h);
+            }
+
+            windowContext.event_bus()->subscribe<WindowResizeEvent>(
+                    [this](const std::shared_ptr<ribble::core::Event> &baseEvt) {
+                        if (!m_window || !m_glContext)
+                            return;
+
+                        if (SDL_GL_MakeCurrent(m_window, m_glContext) != 0)
+                            return;
+
+                        int w = 0, h = 0;
+                        if (!SDL_GetWindowSizeInPixels(m_window, &w, &h)) {
+                            SDL_GetWindowSize(m_window, &w, &h);
+                        }
+
+                        glViewport(0, 0, w, h);
+                    });
 
             SDL_GL_SetSwapInterval(1);
-            return core::Ok();
+            return ribble::core::Ok();
         }
 
         void destroy() override {
@@ -64,5 +86,4 @@ namespace ribble::backend::opengl {
         SDL_Window *m_window{nullptr};
         SDL_GLContext m_glContext{nullptr};
     };
-
-} // namespace ribble::backend::opengl
+} // namespace backend

@@ -1,8 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace ribble::backend {
-
+namespace backend {
     enum class PrimitiveTopology {
         Triangles,
         TriangleStrip,
@@ -114,7 +113,13 @@ namespace ribble::backend {
         TessellationEvaluation,
     };
 
+    enum class ShaderLanguage {
+        GLSL, // OpenGL Shading Language
+        HLSL, // High-Level Shading Language (DirectX)
+        MSL, // Metal Shading Language
+        SPIRV, // SPIR-V bytecode (Vulkan)
+    };
+
     using RenderHandle = uint32_t;
     constexpr RenderHandle InvalidHandle = 0;
-
-} // namespace ribble::backend
+} // namespace backend

@@ -2,7 +2,7 @@
 #include <ribble/core/logger.h>
 #include "opengl_conversions.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     OpenGLFramebuffer::~OpenGLFramebuffer() { destroy(); }
 
@@ -24,7 +24,7 @@ namespace ribble::backend::opengl {
         return *this;
     }
 
-    core::Result<void, OpenGLFramebuffer::Failure> OpenGLFramebuffer::create(const FramebufferDesc &desc) {
+    ribble::core::Result<void, OpenGLFramebuffer::Failure> OpenGLFramebuffer::create(const FramebufferDesc &desc) {
         destroy();
         m_desc = desc;
 
@@ -49,7 +49,8 @@ namespace ribble::backend::opengl {
 
             if (auto r = m_colorTextures[i].create(td); !r) {
                 destroy();
-                return core::Fail(RIBBLE_ERROR(Failure::CreationFailure, "Failed to create color attachment {}", i));
+                return ribble::core::Fail(
+                        RIBBLE_ERROR(Failure::CreationFailure, "Failed to create color attachment {}", i));
             }
 
             const GLenum attachment = GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(i);
@@ -74,7 +75,8 @@ namespace ribble::backend::opengl {
 
             if (auto r = m_depthTexture.create(dd); !r) {
                 destroy();
-                return core::Fail(RIBBLE_ERROR(Failure::CreationFailure, "Failed to create depth/stencil attachment"));
+                return ribble::core::Fail(
+                        RIBBLE_ERROR(Failure::CreationFailure, "Failed to create depth/stencil attachment"));
             }
 
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depthTexture.id(), 0);
@@ -85,14 +87,14 @@ namespace ribble::backend::opengl {
 
         if (status != GL_FRAMEBUFFER_COMPLETE) {
             destroy();
-            return core::Fail(
+            return ribble::core::Fail(
                     RIBBLE_ERROR(Failure::IncompleteFramebuffer, "Framebuffer incomplete, status: {:#x}", status));
         }
 
-        return core::Ok();
+        return ribble::core::Ok();
     }
 
-    core::Result<void, OpenGLFramebuffer::Failure> OpenGLFramebuffer::resize(int width, int height) {
+    ribble::core::Result<void, OpenGLFramebuffer::Failure> OpenGLFramebuffer::resize(int width, int height) {
         m_desc.width = width;
         m_desc.height = height;
         return create(m_desc);
@@ -110,4 +112,4 @@ namespace ribble::backend::opengl {
         }
     }
 
-} // namespace ribble::backend::opengl
+} // namespace backend

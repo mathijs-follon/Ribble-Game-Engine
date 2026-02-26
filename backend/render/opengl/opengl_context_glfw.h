@@ -1,35 +1,64 @@
 #pragma once
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
+#include "../../common/window_events.h"
 #include "opengl_context.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     class OpenGLContextGLFW final : public OpenGLContext {
     public:
         ~OpenGLContextGLFW() override { destroy(); }
 
-        core::Result<void, RenderBackend::Failure> create(void *nativeWindowHandle) override {
-            m_window = static_cast<GLFWwindow *>(nativeWindowHandle);
+        ribble::core::Result<void, RenderBackend::Failure>
+        create(ribble::window::WindowContext &windowContext) override {
+            m_window = static_cast<GLFWwindow *>(windowContext.backend()->native_handle());
 
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#if defined(RIBBLE_DEBUG)
-            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif
+            if (!m_window) {
+                return ribble::core::Fail(
+                        RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure, "Invalid window handle provided"));
+            }
+
+            // Make the OpenGL context current (window was already created with OpenGL hints by GLFWWindow)
             glfwMakeContextCurrent(m_window);
 
+            // Load OpenGL function pointers using GLAD
             if (!gladLoadGL(reinterpret_cast<GLADloadfunc>(glfwGetProcAddress)))
-                return core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
-                                               "gladLoadGL failed — could not load OpenGL function pointers"));
+                return ribble::core::Fail(RIBBLE_ERROR(RenderBackend::Failure::ContextCreationFailure,
+                                                       "gladLoadGL failed — could not load OpenGL function pointers"));
 
+            // Set initial viewport
+            int w = 0, h = 0;
+            glfwGetFramebufferSize(m_window, &w, &h);
+            if (w > 0 && h > 0) {
+                glViewport(0, 0, w, h);
+            }
+
+            // Subscribe to resize events to update viewport
+            windowContext.event_bus()->subscribe<WindowResizeEvent>(
+                    [this](const std::shared_ptr<ribble::core::Event> &baseEvt) {
+                        if (!m_window)
+                            return;
+                        glfwMakeContextCurrent(m_window);
+                        int w = 0, h = 0;
+                        glfwGetFramebufferSize(m_window, &w, &h);
+                        if (w > 0 && h > 0) {
+                            glViewport(0, 0, w, h);
+                        }
+                    });
+
+            // Set vsync
             glfwSwapInterval(1);
-            return core::Ok();
+            return ribble::core::Ok();
         }
 
         void destroy() override { m_window = nullptr; }
-        void swap_buffers() override { glfwSwapBuffers(m_window); }
+        void swap_buffers() override {
+            if (m_window) {
+                glfwSwapBuffers(m_window);
+            }
+        }
         void set_swap_interval(int i) override { glfwSwapInterval(i); }
 
         [[nodiscard]] const char *backend_name() const override { return "OpenGL 4.6 (GLFW)"; }
@@ -39,4 +68,4 @@ namespace ribble::backend::opengl {
         GLFWwindow *m_window{nullptr};
     };
 
-} // namespace ribble::backend::opengl
+} // namespace backend

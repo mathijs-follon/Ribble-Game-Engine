@@ -31,6 +31,7 @@ add_library(ribble_backend_opengl STATIC
         opengl_context_sdl3.h
         opengl_context_glfw.h
     ${GLAD_SRC_DIR}/gl.c
+        opengl_context_x11.h
 )
 
 target_include_directories(ribble_backend_opengl PUBLIC
@@ -39,6 +40,8 @@ target_include_directories(ribble_backend_opengl PUBLIC
     ../../../include/
     ${GLAD_INCLUDE_DIR}
 )
+
+target_include_directories(ribble_backend_opengl PRIVATE ${CMAKE_SOURCE_DIR}/lib/stb)
 
 target_link_libraries(ribble_backend_opengl PUBLIC
     OpenGL::GL

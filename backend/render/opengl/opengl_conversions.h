@@ -2,7 +2,7 @@
 #include <glad/gl.h>
 #include "backend_types.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
     [[nodiscard]] inline GLenum to_gl_primitive(PrimitiveTopology topology) {
         switch (topology) {
@@ -221,4 +221,4 @@ namespace ribble::backend::opengl {
         }
     }
 
-} // namespace ribble::backend::opengl
+} // namespace backend

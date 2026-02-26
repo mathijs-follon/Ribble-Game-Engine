@@ -9,7 +9,7 @@ namespace ribble::core {
 
     class EngineContext {
     public:
-        EngineContext();
+        EngineContext(backend::WindowBackendType windowType, backend::RenderBackendType backendType);
         ~EngineContext() = default;
 
         [[nodiscard]] const TimeManager &time() const { return *m_timeManager; }
@@ -45,7 +45,10 @@ namespace ribble::core {
         Engine(Engine &&other) noexcept = default;
         Engine &operator=(Engine &&other) noexcept = default;
 
-        [[nodiscard]] Result<void, Failure> initialize();
+        [[nodiscard]] Result<void, Failure> initialize(backend::WindowBackendType windowType,
+                                                       backend::RenderBackendType rendererType);
+
+        Result<void, Engine::Failure> create_window(int width, int height, const char *title);
 
         Result<void, Failure> run();
         Result<void, Failure> stop();

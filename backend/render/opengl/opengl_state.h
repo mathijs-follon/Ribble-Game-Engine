@@ -4,9 +4,9 @@
 #include "render_backend.h"
 #include "ribble/render/color.h"
 
-namespace ribble::backend::opengl {
+namespace backend {
 
-    using ClearColor = render::ColorRGBA;
+    using ClearColor = ribble::render::ColorRGBA;
 
     /// Caches OpenGL state to avoid redundant driver calls.
     /// All RenderBackend state changes should go through this.
@@ -44,6 +44,9 @@ namespace ribble::backend::opengl {
         // ── Culling ───────────────────────────────────────────────────────────
         void set_cull_face(CullMode mode);
         void set_winding_order(WindingOrder order);
+
+        // ── Program Point Size ──────────────────────────────────────────────────
+        void set_program_point_size(bool enabled);
 
         // ── Binding helpers (with cache) ──────────────────────────────────────
         void bind_vao(GLuint vao);
@@ -83,6 +86,9 @@ namespace ribble::backend::opengl {
             CullMode cullMode{CullMode::None};
             WindingOrder windingOrder{WindingOrder::CounterClockwise};
 
+            // Program Point Size
+            bool programPointSize{false};
+
             // Bindings
             GLuint boundVao{0};
             GLuint boundVbo{0};
@@ -98,4 +104,4 @@ namespace ribble::backend::opengl {
         bool m_dirty{true}; // True until first reset() / apply
     };
 
-} // namespace ribble::backend::opengl
+} // namespace backend
