@@ -113,7 +113,6 @@ namespace backend {
                 });
 
         m_initialized = true;
-        RIBBLE_LOG_DEBUG("OpenGL backend initialized ({}x{}).", width, height);
         return ribble::core::Ok();
     }
 

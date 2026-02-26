@@ -1,11 +1,13 @@
+// Include our event types before X11 so X11 macros don't replace our enum identifiers
+#include "../../common/window_events.h"
+
 #include "x11_window_backend.h"
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <ribble/core/logger.h>
-#include "../../common/window_events.h"
 
-// Undef X11 macros that conflict with our types (KeyModifiers::None, MouseButton::Button4/Button5, etc.)
+// Undef X11 macros that conflict with our enums (KeyModifiers, MouseButton)
 #undef None
 #undef Success
 #undef Failure
@@ -14,6 +16,12 @@
 #undef Button3
 #undef Button4
 #undef Button5
+#undef Shift
+#undef Control
+#undef Alt
+#undef Super
+#undef CapsLock
+#undef NumLock
 
 using namespace ribble::core;
 

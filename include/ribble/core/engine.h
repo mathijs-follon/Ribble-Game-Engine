@@ -7,10 +7,31 @@
 
 namespace ribble::core {
 
+    struct EngineContextSettings {
+        struct Graphics {
+            backend::WindowBackendType windowBackend{backend::WindowBackendType::SDL3};
+            backend::RenderBackendType renderBackend{backend::RenderBackendType::OpenGL};
+        };
+
+        struct Window {
+            const char* windowTitle{"Ribble Window"};
+            int windowWidth{1024};
+            int windowHeight{768};
+
+            int targetFPS{60};
+            bool limitingFPS{true};
+        };
+
+        Window window;
+        Graphics graphics;
+    };
+
     class EngineContext {
     public:
-        EngineContext(backend::WindowBackendType windowType, backend::RenderBackendType backendType);
+        EngineContext(const EngineContextSettings& engineContextSettings);
         ~EngineContext() = default;
+
+        [[nodiscard]] const EngineContextSettings &settings() const { return m_settings; }
 
         [[nodiscard]] const TimeManager &time() const { return *m_timeManager; }
         TimeManager &time() { return *m_timeManager; }
@@ -22,6 +43,7 @@ namespace ribble::core {
         [[nodiscard]] backend::RenderBackend &renderer() { return *m_renderer; }
 
     private:
+        EngineContextSettings m_settings;
         std::unique_ptr<TimeManager> m_timeManager;
         std::unique_ptr<window::WindowContext> m_windowContext;
         std::unique_ptr<backend::RenderBackend> m_renderer;
@@ -45,15 +67,14 @@ namespace ribble::core {
         Engine(Engine &&other) noexcept = default;
         Engine &operator=(Engine &&other) noexcept = default;
 
-        [[nodiscard]] Result<void, Failure> initialize(backend::WindowBackendType windowType,
-                                                       backend::RenderBackendType rendererType);
+        [[nodiscard]] Result<void, Failure> initialize(const EngineContextSettings& engineContextSettings);
 
+        Result<void, Engine::Failure> create_window();
         Result<void, Engine::Failure> create_window(int width, int height, const char *title);
 
         Result<void, Failure> run();
         Result<void, Failure> stop();
-
-        [[nodiscard]] Result<void, Failure> shutdown();
+        Result<void, Failure> shutdown();
 
         [[nodiscard]] const EngineContext &context() const;
         EngineContext &context();

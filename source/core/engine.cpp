@@ -57,10 +57,14 @@ namespace ribble::core {
         }
     }
 
-    EngineContext::EngineContext(backend::WindowBackendType windowType, backend::RenderBackendType renderType) :
+    EngineContext::EngineContext(const EngineContextSettings& engineContextSettings) :
+        m_settings{engineContextSettings},
         m_timeManager{std::make_unique<TimeManager>()},
-        m_windowContext{std::make_unique<window::WindowContext>(windowType)},
-        m_renderer{create_renderer(windowType, renderType)} {}
+        m_windowContext{std::make_unique<window::WindowContext>(engineContextSettings.graphics.windowBackend)},
+        m_renderer{create_renderer(engineContextSettings.graphics.windowBackend, engineContextSettings.graphics.renderBackend)} {
+        m_timeManager->frame().set_target_fps(static_cast<float>(engineContextSettings.window.targetFPS));
+        m_timeManager->frame().set_limiting(engineContextSettings.window.limitingFPS);
+    }
 
     // Engine
 
@@ -68,19 +72,23 @@ namespace ribble::core {
 
     Engine::~Engine() = default;
 
-    Result<void, Engine::Failure> Engine::initialize(backend::WindowBackendType windowType,
-                                                     backend::RenderBackendType rendererType) {
+    Result<void, Engine::Failure> Engine::initialize(const EngineContextSettings& engineContextSettings) {
         if (m_initialized) {
             return Fail(RIBBLE_WARN(Failure::AlreadyInitialized,
                                     "You are trying to initialize the engine multiple times."));
         }
-        m_context = std::make_unique<EngineContext>(windowType, rendererType);
+        m_context = std::make_unique<EngineContext>(engineContextSettings);
 
         InitializeLogger();
 
         m_initialized = true;
         RIBBLE_LOG_INFO("Engine initialized.");
         return Ok();
+    }
+
+    Result<void, Engine::Failure> Engine::create_window() {
+        const auto& win = context().settings().window;
+        return create_window(win.windowWidth, win.windowHeight, win.windowTitle);
     }
 
     Result<void, Engine::Failure> Engine::create_window(int width, int height, const char *title) {
