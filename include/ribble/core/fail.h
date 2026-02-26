@@ -6,18 +6,7 @@
 #include <ribble/util/enum.h>
 #include <utility>
 #include <variant>
-
-// Check for std::expected support (C++23 feature)
-// MSVC with /std:c++latest may not set __cplusplus correctly without /Zc:__cplusplus
-// So we check both __cplusplus and MSVC version (19.30+ supports C++23)
-// MSVC 19.44 (version 1944) definitely supports C++23 and std::expected
-#if __cplusplus >= 202302L || (defined(_MSC_VER) && _MSC_VER >= 1930 && defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || (defined(_MSC_VER) && _MSC_VER >= 1940)
-    #include <expected>
-    #ifndef __cpp_lib_expected
-    #endif
-#else
-    #error "std::expected requires C++23. Please set CMAKE_CXX_STANDARD to 23 and ensure your compiler supports C++23."
-#endif
+#include <expected>
 
 namespace ribble::core {
 
@@ -104,7 +93,7 @@ namespace ribble::core {
 
         Result(base_type expected) : m_expected(std::move(expected)) {}
 
-        bool has_value() const { return m_expected.has_value(); }
+        [[nodiscard]] bool has_value() const { return m_expected.has_value(); }
         explicit operator bool() const { return m_expected.has_value(); }
         
         const Failure<F>& error() const { return m_expected.error(); }
@@ -134,6 +123,18 @@ namespace ribble::core {
         auto transform(Func&& f) const {
             return m_expected.transform([&f](const std::monostate&) {
                 return f();
+            });
+        }
+
+        template<typename Func>
+        auto transform_error(Func&& f) const {
+            return m_expected.transform_error([&f](const Failure<F>& err) {
+                if constexpr (std::is_void_v<std::invoke_result_t<Func, Failure<F>>>) {
+                    f(err);
+                    return err;
+                } else {
+                    return f(err);
+                }
             });
         }
 

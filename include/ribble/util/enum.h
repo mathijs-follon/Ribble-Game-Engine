@@ -1,13 +1,8 @@
 #pragma once
 #include <string>
 
-template<typename T>
-struct EnumToString {
-    static constexpr const char* ToString(T) noexcept { return nullptr; }
-};
-
 #define RIBBLE_ENUM_TO_STRING(EnumType, CASES) \
-template<> struct EnumToString<EnumType> { \
+template<> struct ribble::util::EnumToString<EnumType> { \
 static const char* ToString(EnumType v) noexcept { \
 switch (v) { \
 CASES \
@@ -18,6 +13,10 @@ default: return nullptr; \
 
 
 namespace ribble::util {
+    template<typename T>
+    struct EnumToString {
+        static constexpr const char* ToString(T) noexcept { return nullptr; }
+    };
 
     template<typename T>
     std::string EnumValueToString(T v) {

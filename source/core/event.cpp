@@ -4,11 +4,11 @@
 #include <algorithm>
 
 using namespace ribble::core;
-RIBBLE_ENUM_TO_STRING(EventFailure,
-case EventFailure::EventBusNotInitialized: return "Event Bus Not Initialized";
-case EventFailure::InvalidEventType: return "Invalid Event Type";
-case EventFailure::ListenerAlreadyExists: return "Listener Already Exists";
-case EventFailure::ListenerNotFound: return "Listener Not Found";
+RIBBLE_ENUM_TO_STRING(EventBus::Failure,
+case EventBus::Failure::EventBusNotInitialized: return "Event Bus Not Initialized";
+case EventBus::Failure::InvalidEventType: return "Invalid Event Type";
+case EventBus::Failure::ListenerAlreadyExists: return "Listener Already Exists";
+case EventBus::Failure::ListenerNotFound: return "Listener Not Found";
 );
 
 
@@ -59,10 +59,10 @@ namespace ribble::core {
         return id;
     }
 
-    Result<void, EventFailure> EventBus::unsubscribe(std::type_index eventType, EventListenerId listenerId) {
+    Result<void, EventBus::Failure> EventBus::unsubscribe(std::type_index eventType, EventListenerId listenerId) {
         auto it = m_listeners.find(eventType);
         if (it == m_listeners.end()) {
-            return Fail(RIBBLE_WARN(EventFailure::ListenerNotFound, "when unsubscribing from event bus."));
+            return Fail(RIBBLE_WARN(EventBus::Failure::ListenerNotFound, "when unsubscribing from event bus."));
         }
 
         auto& listeners = it->second;
@@ -72,7 +72,7 @@ namespace ribble::core {
             });
 
         if (listenerIt == listeners.end()) {
-            return Fail(RIBBLE_WARN(EventFailure::ListenerNotFound, "when unsubscribing from event bus."));
+            return Fail(RIBBLE_WARN(EventBus::Failure::ListenerNotFound, "when unsubscribing from event bus."));
         }
 
         listeners.erase(listenerIt);

@@ -30,7 +30,7 @@ if(GLFW_TARGET)
 
     target_include_directories(ribble_backend_window_glfw PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+            ../../../include/ribble/backend
         ${GLFW_INCLUDE_DIR}
     )
 

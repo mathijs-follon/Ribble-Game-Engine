@@ -10,13 +10,6 @@
 
 namespace ribble::core {
 
-    enum EventFailure {
-        ListenerNotFound,
-        ListenerAlreadyExists,
-        InvalidEventType,
-        EventBusNotInitialized
-    };
-
     class Node;
     class Component;
 
@@ -38,16 +31,21 @@ namespace ribble::core {
 
         void set_propagate(bool propagate) { m_propagate = propagate; }
         [[nodiscard]] bool should_propagate() const { return m_propagate; }
+    private:
+        bool m_handled{false};
+        bool m_propagate{true};
+    };
 
+
+    // Todo: move to correct file
+    class ComponentEvent : public Event {
+    public:
         void set_source_component(std::shared_ptr<Component> component) { m_sourceComponent = std::move(component); }
         [[nodiscard]] std::shared_ptr<Component> source_component() const { return m_sourceComponent; }
 
         void set_source_node(std::shared_ptr<Node> node) { m_sourceNode = std::move(node); }
         [[nodiscard]] std::shared_ptr<Node> source_node() const { return m_sourceNode; }
-
     private:
-        bool m_handled{false};
-        bool m_propagate{true};
         std::shared_ptr<Component> m_sourceComponent;
         std::shared_ptr<Node> m_sourceNode;
     };
@@ -90,6 +88,13 @@ namespace ribble::core {
 
     class EventBus {
     public:
+        enum class Failure {
+            ListenerNotFound,
+            ListenerAlreadyExists,
+            InvalidEventType,
+            EventBusNotInitialized
+        };
+
         EventBus();
         ~EventBus() = default;
 
@@ -112,8 +117,8 @@ namespace ribble::core {
 
         template<typename T>
         requires std::derived_from<T, Event>
-        Result<void, EventFailure> unsubscribe(EventListenerId listenerId);
-        Result<void, EventFailure> unsubscribe(std::type_index eventType, EventListenerId listenerId);
+        Result<void, Failure> unsubscribe(EventListenerId listenerId);
+        Result<void, Failure> unsubscribe(std::type_index eventType, EventListenerId listenerId);
 
         template<typename T>
         requires std::derived_from<T, Event>
@@ -178,7 +183,7 @@ namespace ribble::core {
 
     template<typename T>
     requires std::derived_from<T, Event>
-    Result<void, EventFailure> EventBus::unsubscribe(EventListenerId listenerId) {
+    Result<void, EventBus::Failure> EventBus::unsubscribe(EventListenerId listenerId) {
         auto eventType = std::type_index(typeid(T));
         return unsubscribe(eventType, listenerId);
     }

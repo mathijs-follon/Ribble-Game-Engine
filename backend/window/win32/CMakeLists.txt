@@ -8,7 +8,7 @@ if(WIN32)
 
     target_include_directories(ribble_backend_window_win32 PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+            ../../../include/ribble/backend
     )
 
     target_link_libraries(ribble_backend_window_win32 PUBLIC

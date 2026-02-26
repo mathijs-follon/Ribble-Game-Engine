@@ -2,7 +2,7 @@
 # Note: doctest is configured in the root CMakeLists.txt
 
 # Add backend common as dependency
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../backend/common)
+add_subdirectory(../include/ribble/backend)
 
 # Unit tests
 add_subdirectory(unit)
