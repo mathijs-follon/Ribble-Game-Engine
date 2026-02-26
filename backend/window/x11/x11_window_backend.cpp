@@ -1,4 +1,6 @@
-// Include our event types before X11 so X11 macros don't replace our enum identifiers
+// Include window_backend.h (and backend_types.h) before X11 so X11 macros
+// (None, Always, etc.) don't replace our enum identifiers in backend_types.h
+#include "../../common/window_backend.h"
 #include "../../common/window_events.h"
 
 #include <X11/Xatom.h>
@@ -7,8 +9,9 @@
 #include <ribble/core/logger.h>
 #include "x11_window_backend.h"
 
-// Undef X11 macros that conflict with our enums (KeyModifiers, MouseButton)
+// Undef X11 macros that conflict with our enums (KeyModifiers, MouseButton, CullMode::None, DepthFunc::Always)
 #undef None
+#undef Always
 #undef Success
 #undef Failure
 #undef Button1

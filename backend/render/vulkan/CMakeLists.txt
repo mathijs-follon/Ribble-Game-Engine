@@ -11,14 +11,12 @@ file(MAKE_DIRECTORY ${VULKAN_SHADERS_BUILD})
 if(GLSLANG_VALIDATOR)
     add_custom_command(OUTPUT ${VULKAN_SHADERS_BUILD}/default_vert_spv.h
         COMMAND ${GLSLANG_VALIDATOR} -V ${VULKAN_SHADERS_DIR}/default.vert -o ${VULKAN_SHADERS_BUILD}/default_vert.spv
-        COMMAND ${CMAKE_COMMAND} -E echo "// Generated from default.vert" > ${VULKAN_SHADERS_BUILD}/default_vert_spv.h
-        COMMAND ${CMAKE_COMMAND} -E chdir ${VULKAN_SHADERS_BUILD} sh -c "xxd -i default_vert.spv >> default_vert_spv.h"
+        COMMAND ${CMAKE_COMMAND} -D SPV_FILE=${VULKAN_SHADERS_BUILD}/default_vert.spv -D OUTPUT=${VULKAN_SHADERS_BUILD}/default_vert_spv.h -D VAR_NAME=default_vert_spv -P ${CMAKE_CURRENT_SOURCE_DIR}/embed_shader.cmake
         DEPENDS ${VULKAN_SHADERS_DIR}/default.vert
         COMMENT "Compiling default vertex shader")
     add_custom_command(OUTPUT ${VULKAN_SHADERS_BUILD}/default_frag_spv.h
         COMMAND ${GLSLANG_VALIDATOR} -V ${VULKAN_SHADERS_DIR}/default.frag -o ${VULKAN_SHADERS_BUILD}/default_frag.spv
-        COMMAND ${CMAKE_COMMAND} -E echo "// Generated from default.frag" > ${VULKAN_SHADERS_BUILD}/default_frag_spv.h
-        COMMAND ${CMAKE_COMMAND} -E chdir ${VULKAN_SHADERS_BUILD} sh -c "xxd -i default_frag.spv >> default_frag_spv.h"
+        COMMAND ${CMAKE_COMMAND} -D SPV_FILE=${VULKAN_SHADERS_BUILD}/default_frag.spv -D OUTPUT=${VULKAN_SHADERS_BUILD}/default_frag_spv.h -D VAR_NAME=default_frag_spv -P ${CMAKE_CURRENT_SOURCE_DIR}/embed_shader.cmake
         DEPENDS ${VULKAN_SHADERS_DIR}/default.frag
         COMMENT "Compiling default fragment shader")
     add_custom_target(vulkan_compile_shaders DEPENDS

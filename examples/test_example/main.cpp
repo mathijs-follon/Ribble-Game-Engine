@@ -8,7 +8,7 @@ int main() {
     Engine engine;
 
     EngineContextSettings settings;
-    settings.graphics.renderBackend = RenderBackendType::OpenGL;
+    settings.graphics.renderBackend = RenderBackendType::Vulkan;
     settings.window.windowWidth = 1400;
     settings.window.windowHeight = 700;
     settings.window.windowTitle = "This Is My Window";

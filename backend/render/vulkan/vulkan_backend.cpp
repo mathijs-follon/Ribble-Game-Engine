@@ -495,7 +495,8 @@ namespace backend {
     }
 
     ribble::core::Result<void, RenderBackend::Failure> VulkanBackend::begin_frame() {
-        vkWaitForFences(m_device, 1, &m_sync.inFlightFence(m_currentFrame), VK_TRUE, UINT64_MAX);
+        const VkFence fence = m_sync.inFlightFence(m_currentFrame);
+        vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX);
 
         VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain.handle(), UINT64_MAX,
                                                 m_sync.imageAvailable(m_currentFrame), VK_NULL_HANDLE,
@@ -510,7 +511,7 @@ namespace backend {
         }
 
         m_frameAcquired = true;
-        vkResetFences(m_device, 1, &m_sync.inFlightFence(m_currentFrame));
+        vkResetFences(m_device, 1, &fence);
 
         vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
         begin_render_pass();
@@ -548,7 +549,8 @@ namespace backend {
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
         presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = &m_swapchain.handle();
+        const VkSwapchainKHR swapchain = m_swapchain.handle();
+        presentInfo.pSwapchains = &swapchain;
         presentInfo.pImageIndices = &m_currentImageIndex;
         presentInfo.pResults = nullptr;
 
