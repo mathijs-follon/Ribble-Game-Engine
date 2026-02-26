@@ -122,4 +122,12 @@ namespace backend {
 
     using RenderHandle = uint32_t;
     constexpr RenderHandle InvalidHandle = 0;
+
+    /// Hint for window creation (which graphics API will be used)
+    enum class GraphicsAPI {
+        OpenGL,
+        Vulkan,
+        DirectX12,
+        Metal,
+    };
 } // namespace backend

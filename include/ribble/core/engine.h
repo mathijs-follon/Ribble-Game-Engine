@@ -9,7 +9,11 @@ namespace ribble::core {
 
     struct EngineContextSettings {
         struct Graphics {
+#ifdef _WIN32
+            backend::WindowBackendType windowBackend{backend::WindowBackendType::Win32};
+#else
             backend::WindowBackendType windowBackend{backend::WindowBackendType::SDL3};
+#endif
             backend::RenderBackendType renderBackend{backend::RenderBackendType::OpenGL};
         };
 
@@ -41,6 +45,10 @@ namespace ribble::core {
 
         [[nodiscard]] const backend::RenderBackend &renderer() const { return *m_renderer; }
         [[nodiscard]] backend::RenderBackend &renderer() { return *m_renderer; }
+
+        [[nodiscard]] bool has_valid_backends() const {
+            return m_windowContext->backend() != nullptr && m_renderer != nullptr;
+        }
 
     private:
         EngineContextSettings m_settings;

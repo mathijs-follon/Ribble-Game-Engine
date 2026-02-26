@@ -8,7 +8,6 @@ int main() {
     Engine engine;
 
     EngineContextSettings settings;
-    settings.graphics.windowBackend = WindowBackendType::X11;
     settings.graphics.renderBackend = RenderBackendType::OpenGL;
     settings.window.windowWidth = 1400;
     settings.window.windowHeight = 700;

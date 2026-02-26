@@ -6,6 +6,12 @@
 #ifdef RIBBLE_HAS_X11
 #include "../../backend/window/x11/x11_window_backend.h"
 #endif
+#ifdef RIBBLE_HAS_WAYLAND
+#include "../../backend/window/wayland/wayland_backend.h"
+#endif
+#ifdef _WIN32
+#include "../../backend/window/win32/win32_window_backend.h"
+#endif
 
 namespace ribble::window {
 
@@ -21,6 +27,16 @@ namespace ribble::window {
 #ifdef RIBBLE_HAS_X11
             case ::backend::WindowBackendType::X11:
                 m_windowBackend = std::make_unique<::backend::X11Window>(m_windowEventBus);
+                break;
+#endif
+#ifdef RIBBLE_HAS_WAYLAND
+            case ::backend::WindowBackendType::Wayland:
+                m_windowBackend = std::make_unique<::backend::WaylandBackend>(m_windowEventBus);
+                break;
+#endif
+#ifdef _WIN32
+            case ::backend::WindowBackendType::Win32:
+                m_windowBackend = std::make_unique<::backend::Win32WindowBackend>(m_windowEventBus);
                 break;
 #endif
             default:

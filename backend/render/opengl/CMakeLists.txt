@@ -30,8 +30,9 @@ add_library(ribble_backend_opengl STATIC
         opengl_context.h
         opengl_context_sdl3.h
         opengl_context_glfw.h
-    ${GLAD_SRC_DIR}/gl.c
         opengl_context_x11.h
+        opengl_context_win32.h
+    ${GLAD_SRC_DIR}/gl.c
 )
 
 target_include_directories(ribble_backend_opengl PUBLIC

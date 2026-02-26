@@ -27,6 +27,9 @@ else()
 endif()
 
 if(SDL3_TARGET)
+    # Export for parent scope - Ribble links SDL3 directly (sdl3_window_backend.cpp is in Ribble sources)
+    set(SDL3_RIBBLE_LINK_TARGET ${SDL3_TARGET} PARENT_SCOPE)
+
     add_library(ribble_backend_window_sdl3 STATIC
         sdl3_window_backend.cpp
         sdl3_window_backend.h

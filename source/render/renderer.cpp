@@ -73,15 +73,9 @@ namespace ribble::render {
 
     void Renderer::set_winding_order(backend::WindingOrder order) { m_backend.set_winding_order(order); }
 
-    void Renderer::enable_program_point_size() {
-        // This would need backend support
-        // TODO: Add set_program_point_size to RenderBackend interface if needed
-    }
+    void Renderer::enable_program_point_size() { m_backend.set_program_point_size(true); }
 
-    void Renderer::disable_program_point_size() {
-        // This would need backend support
-        // TODO: Add set_program_point_size to RenderBackend interface if needed
-    }
+    void Renderer::disable_program_point_size() { m_backend.set_program_point_size(false); }
 
     core::Result<void, RendererFailure> Renderer::draw_indexed(backend::RenderHandle vertexArrayHandle,
                                                                uint32_t indexCount, backend::IndexType indexType,

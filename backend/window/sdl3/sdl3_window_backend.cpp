@@ -323,20 +323,24 @@ namespace backend {
         RIBBLE_LOG_INFO("SDL_Init success. Video driver: {}",
                         SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "null");
 
-        // Set OpenGL attributes before creating the window
-        // This allows the window to be created with OpenGL support
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+        uint32_t windowFlags = SDL_WINDOW_RESIZABLE;
+        if (m_graphicsAPI == GraphicsAPI::Vulkan) {
+            windowFlags |= SDL_WINDOW_VULKAN;
+        } else {
+            // Set OpenGL attributes before creating the window
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+            SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+            SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 #if defined(RIBBLE_DEBUG)
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
+            windowFlags |= SDL_WINDOW_OPENGL;
+        }
 
-        // Create window with OpenGL support
-        m_window = SDL_CreateWindow(title, width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+        m_window = SDL_CreateWindow(title, width, height, windowFlags);
         if (!m_window) {
             return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "SDL_CreateWindow failed: {}",
                                      SDL_GetError()));

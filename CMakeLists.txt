@@ -321,30 +321,7 @@ target_include_directories(Ribble PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb
 )
 
-target_link_libraries(Ribble PUBLIC spdlog::spdlog)
-target_link_libraries(Ribble PRIVATE SDL3::SDL3 glfw)
-target_link_libraries(Ribble PRIVATE ribble_backend_opengl ribble_backend_window_glfw)
-if(UNIX AND NOT APPLE)
-    target_compile_definitions(Ribble PRIVATE RIBBLE_HAS_X11)
-    target_link_libraries(Ribble PRIVATE ribble_backend_window_x11)
-endif()
-
-if(UNIX)
-    target_link_libraries(Ribble PUBLIC dl)
-    target_link_options(Ribble PRIVATE -Wl,--allow-multiple-definition)
-endif()
-
-
-
-# Examples
-add_subdirectory(examples/test_example)
-
-# Tests
-add_subdirectory(tests/backend)
-add_subdirectory(tests/integration)
-add_subdirectory(tests/unit)
-
-# Backend
+# Backend (must be added before Ribble target_link_libraries so targets exist)
 add_subdirectory(backend/common)
 add_subdirectory(backend/audio/miniaudio)
 add_subdirectory(backend/render/dx12)
@@ -357,6 +334,63 @@ add_subdirectory(backend/window/glfw)
 add_subdirectory(backend/window/sdl3)
 add_subdirectory(backend/window/win32)
 add_subdirectory(backend/window/x11)
+add_subdirectory(backend/window/wayland)
+
+target_link_libraries(Ribble PUBLIC spdlog::spdlog)
+target_link_libraries(Ribble PRIVATE glfw)
+# SDL3 target name varies: SDL3-static (local) vs SDL3::SDL3 (find_package)
+if(SDL3_RIBBLE_LINK_TARGET)
+    target_link_libraries(Ribble PRIVATE ${SDL3_RIBBLE_LINK_TARGET})
+elseif(TARGET SDL3::SDL3)
+    target_link_libraries(Ribble PRIVATE SDL3::SDL3)
+elseif(TARGET SDL3-static)
+    target_link_libraries(Ribble PRIVATE SDL3-static)
+else()
+    message(WARNING "SDL3 not found - SDL3 window backend will be unavailable at runtime")
+endif()
+target_link_libraries(Ribble PRIVATE ribble_backend_opengl ribble_backend_window_glfw)
+if(TARGET ribble_backend_vulkan)
+    target_link_libraries(Ribble PRIVATE ribble_backend_vulkan)
+    target_compile_definitions(Ribble PRIVATE RIBBLE_HAS_VULKAN)
+endif()
+if(UNIX AND NOT APPLE)
+    target_compile_definitions(Ribble PRIVATE RIBBLE_HAS_X11)
+    target_link_libraries(Ribble PRIVATE ribble_backend_window_x11)
+    if(TARGET ribble_backend_window_wayland)
+        target_compile_definitions(Ribble PRIVATE RIBBLE_HAS_WAYLAND)
+        target_link_libraries(Ribble PRIVATE ribble_backend_window_wayland)
+        find_package(EGL QUIET)
+        if(NOT EGL_FOUND)
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(EGL REQUIRED egl)
+            if(NOT TARGET EGL::EGL)
+                add_library(EGL::EGL INTERFACE IMPORTED)
+                target_link_libraries(EGL::EGL INTERFACE ${EGL_LIBRARIES})
+                target_include_directories(EGL::EGL INTERFACE ${EGL_INCLUDE_DIRS})
+            endif()
+        endif()
+        target_link_libraries(Ribble PRIVATE EGL::EGL)
+    endif()
+endif()
+
+if(UNIX)
+    target_link_libraries(Ribble PUBLIC dl)
+    target_link_options(Ribble PRIVATE -Wl,--allow-multiple-definition)
+endif()
+
+if(WIN32)
+    target_link_libraries(Ribble PRIVATE ribble_backend_window_win32)
+endif()
+
+
+
+# Examples
+add_subdirectory(examples/test_example)
+
+# Tests
+add_subdirectory(tests/backend)
+add_subdirectory(tests/integration)
+add_subdirectory(tests/unit)
 
 # Editor
 add_subdirectory(editor)

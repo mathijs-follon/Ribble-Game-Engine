@@ -1,6 +1,7 @@
 #include "glfw_window_backend.h"
 
 #include <ribble/core/logger.h>
+#include "../../common/backend_types.h"
 #include "../../common/window_events.h"
 
 using namespace ribble::core;
@@ -236,19 +237,22 @@ namespace backend {
             RIBBLE_LOG_INFO("GLFW initialized.");
         }
 
-        // Set OpenGL context hints BEFORE creating the window
-        // This is critical - hints must be set before window creation
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
-        glfwWindowHint(GLFW_DEPTH_BITS, 24);
-        glfwWindowHint(GLFW_STENCIL_BITS, 8);
+        // Set context hints BEFORE creating the window
+        if (m_graphicsAPI == GraphicsAPI::Vulkan) {
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        } else {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+            glfwWindowHint(GLFW_DEPTH_BITS, 24);
+            glfwWindowHint(GLFW_STENCIL_BITS, 8);
 #if defined(RIBBLE_DEBUG)
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
+        }
 
-        // Create window with OpenGL context
+        // Create window
         m_window = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!m_window) {
             return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "glfwCreateWindow failed"));

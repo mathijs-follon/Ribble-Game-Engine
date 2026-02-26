@@ -1,5 +1,6 @@
 #include <ribble/core/engine.h>
 
+#include "../../backend/common/backend_types.h"
 #include "../../backend/common/window_events.h"
 #include "../../backend/render/opengl/opengl_backend.h"
 #include "../../backend/render/opengl/opengl_context_sdl3.h"
@@ -7,10 +8,23 @@
 #ifdef RIBBLE_HAS_X11
 #include "opengl_context_x11.h"
 #endif
+#ifdef RIBBLE_HAS_WAYLAND
+#include "opengl_context_wayland.h"
+#endif
+#ifdef _WIN32
+#include "opengl_context_win32.h"
+#endif
+#ifdef RIBBLE_HAS_VULKAN
+#include "../../backend/render/vulkan/vulkan_backend.h"
+#include "../../backend/render/vulkan/vulkan_context_glfw.h"
+#include "../../backend/render/vulkan/vulkan_context_sdl3.h"
+#endif
 
 using namespace ribble::core;
 
-RIBBLE_ENUM_TO_STRING(Engine::Failure, case Engine::Failure::AlreadyInitialized : return "Already Initialized";
+RIBBLE_ENUM_TO_STRING(Engine::Failure,
+                      case Engine::Failure::InitializationFailure : return "Initialization Failure";
+                      case Engine::Failure::AlreadyInitialized : return "Already Initialized";
                       case Engine::Failure::AlreadyRunning : return "Already Running";
                       case Engine::Failure::AlreadyShutdown : return "Already Shut Down";);
 
@@ -34,9 +48,21 @@ namespace ribble::core {
                     case W::GLFW:
                         ctx = std::make_unique<backend::OpenGLContextGLFW>();
                         break;
+#ifdef RIBBLE_HAS_X11
                     case W::X11:
                         ctx = std::make_unique<backend::OpenGLContextX11>();
                         break;
+#endif
+#ifdef RIBBLE_HAS_WAYLAND
+                    case W::Wayland:
+                        ctx = std::make_unique<backend::OpenGLContextWayland>();
+                        break;
+#endif
+#ifdef _WIN32
+                    case W::Win32:
+                        ctx = std::make_unique<backend::OpenGLContextWin32>();
+                        break;
+#endif
                     default:
                         RIBBLE_LOG_ERROR("The selected window backend is not supported on your device or by OpenGL",
                                          static_cast<int>(windowType));
@@ -45,7 +71,27 @@ namespace ribble::core {
                 return std::make_unique<backend::OpenGLBackend>(std::move(ctx));
             }
 
-            case R::Vulkan:
+            case R::Vulkan: {
+#ifdef RIBBLE_HAS_VULKAN
+                std::unique_ptr<backend::VulkanContext> vkCtx;
+                switch (windowType) {
+                    case W::SDL3:
+                        vkCtx = std::make_unique<backend::VulkanContextSDL3>();
+                        break;
+                    case W::GLFW:
+                        vkCtx = std::make_unique<backend::VulkanContextGLFW>();
+                        break;
+                    default:
+                        RIBBLE_LOG_ERROR("Vulkan backend requires SDL3 or GLFW window backend");
+                        return nullptr;
+                }
+                return std::make_unique<backend::VulkanBackend>(std::move(vkCtx));
+#else
+                RIBBLE_LOG_ERROR("Vulkan render backend is not available (Vulkan not found at build time).");
+                return nullptr;
+#endif
+            }
+
             case R::DirectX12:
             case R::Metal:
                 RIBBLE_LOG_ERROR("Render backend {} is not yet implemented.", static_cast<int>(renderType));
@@ -79,6 +125,13 @@ namespace ribble::core {
         }
         m_context = std::make_unique<EngineContext>(engineContextSettings);
 
+        if (!m_context->has_valid_backends()) {
+            m_context.reset();
+            return Fail(RIBBLE_ERROR(Failure::InitializationFailure,
+                                     "Window backend and/or render backend not available for the selected "
+                                     "combination. Check that the requested backends are built and supported."));
+        }
+
         InitializeLogger();
 
         m_initialized = true;
@@ -92,6 +145,9 @@ namespace ribble::core {
     }
 
     Result<void, Engine::Failure> Engine::create_window(int width, int height, const char *title) {
+        // Inform window backend which graphics API will be used (affects window creation flags)
+        context().window().backend()->set_graphics_api(
+                static_cast<backend::GraphicsAPI>(static_cast<int>(context().settings().graphics.renderBackend)));
         if (!context().window().backend()->initialize(width, height, title))
             return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Window initialization failed."));
 

@@ -8,7 +8,7 @@ if(WIN32)
 
     target_include_directories(ribble_backend_window_win32 PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-            ../../../include/ribble/backend
+        ../../../include
     )
 
     target_link_libraries(ribble_backend_window_win32 PUBLIC
@@ -18,6 +18,10 @@ if(WIN32)
     )
 
     target_compile_features(ribble_backend_window_win32 PUBLIC cxx_std_23)
+
+    set_target_properties(ribble_backend_window_win32 PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+    )
 else()
     add_library(ribble_backend_window_win32 INTERFACE)
     message(STATUS "Win32 window backend skipped (Windows-only)")
