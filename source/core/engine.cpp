@@ -2,23 +2,8 @@
 
 #include "../../backend/common/backend_types.h"
 #include "../../backend/common/window_events.h"
-#include "../../backend/render/opengl/opengl_backend.h"
-#include "../../backend/render/opengl/opengl_context_sdl3.h"
-#include "opengl_context_glfw.h"
-#ifdef RIBBLE_HAS_X11
-#include "opengl_context_x11.h"
-#endif
-#ifdef RIBBLE_HAS_WAYLAND
-#include "opengl_context_wayland.h"
-#endif
-#ifdef _WIN32
-#include "opengl_context_win32.h"
-#endif
-#ifdef RIBBLE_HAS_VULKAN
-#include "../../backend/render/vulkan/vulkan_backend.h"
-#include "../../backend/render/vulkan/vulkan_context_glfw.h"
-#include "../../backend/render/vulkan/vulkan_context_sdl3.h"
-#endif
+#include "ribble/render/renderer.h"
+#include "ribble/scene/scene.h"
 
 using namespace ribble::core;
 
@@ -32,82 +17,11 @@ namespace ribble::core {
 
     // EngineContext
 
-    static std::unique_ptr<backend::RenderBackend> create_renderer(backend::WindowBackendType windowType,
-                                                                   backend::RenderBackendType renderType) {
-        using W = backend::WindowBackendType;
-        using R = backend::RenderBackendType;
-
-        switch (renderType) {
-
-            case R::OpenGL: {
-                std::unique_ptr<backend::OpenGLContext> ctx;
-                switch (windowType) {
-                    case W::SDL3:
-                        ctx = std::make_unique<backend::OpenGLContextSDL3>();
-                        break;
-                    case W::GLFW:
-                        ctx = std::make_unique<backend::OpenGLContextGLFW>();
-                        break;
-#ifdef RIBBLE_HAS_X11
-                    case W::X11:
-                        ctx = std::make_unique<backend::OpenGLContextX11>();
-                        break;
-#endif
-#ifdef RIBBLE_HAS_WAYLAND
-                    case W::Wayland:
-                        ctx = std::make_unique<backend::OpenGLContextWayland>();
-                        break;
-#endif
-#ifdef _WIN32
-                    case W::Win32:
-                        ctx = std::make_unique<backend::OpenGLContextWin32>();
-                        break;
-#endif
-                    default:
-                        RIBBLE_LOG_ERROR("The selected window backend is not supported on your device or by OpenGL",
-                                         static_cast<int>(windowType));
-                        return nullptr;
-                }
-                return std::make_unique<backend::OpenGLBackend>(std::move(ctx));
-            }
-
-            case R::Vulkan: {
-#ifdef RIBBLE_HAS_VULKAN
-                std::unique_ptr<backend::VulkanContext> vkCtx;
-                switch (windowType) {
-                    case W::SDL3:
-                        vkCtx = std::make_unique<backend::VulkanContextSDL3>();
-                        break;
-                    case W::GLFW:
-                        vkCtx = std::make_unique<backend::VulkanContextGLFW>();
-                        break;
-                    default:
-                        RIBBLE_LOG_ERROR("Vulkan backend requires SDL3 or GLFW window backend");
-                        return nullptr;
-                }
-                return std::make_unique<backend::VulkanBackend>(std::move(vkCtx));
-#else
-                RIBBLE_LOG_ERROR("Vulkan render backend is not available (Vulkan not found at build time).");
-                return nullptr;
-#endif
-            }
-
-            case R::DirectX12:
-            case R::Metal:
-                RIBBLE_LOG_ERROR("Render backend {} is not yet implemented.", static_cast<int>(renderType));
-                return nullptr;
-
-            default:
-                RIBBLE_LOG_ERROR("Unknown render backend type {}.", static_cast<int>(renderType));
-                return nullptr;
-        }
-    }
-
     EngineContext::EngineContext(const EngineContextSettings &engineContextSettings) :
         m_settings{engineContextSettings}, m_timeManager{std::make_unique<TimeManager>()},
         m_windowContext{std::make_unique<window::WindowContext>(engineContextSettings.graphics.windowBackend)},
-        m_renderer{create_renderer(engineContextSettings.graphics.windowBackend,
-                                   engineContextSettings.graphics.renderBackend)} {
+        m_renderer{std::make_unique<ribble::render::Renderer>(engineContextSettings.graphics.windowBackend,
+                                                              engineContextSettings.graphics.renderBackend)} {
         m_timeManager->frame().set_target_fps(static_cast<float>(engineContextSettings.window.targetFPS));
         m_timeManager->frame().set_limiting(engineContextSettings.window.limitingFPS);
     }
@@ -151,10 +65,15 @@ namespace ribble::core {
         if (!context().window().backend()->initialize(width, height, title))
             return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Window initialization failed."));
 
-        if (auto renderInitResult = context().renderer().initialize(context().window(), width, height);
-            !renderInitResult) {
-            return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Render backend initialization failed."));
+        if (auto renderInitResult = context().renderer().initialize(context().window(), width, height); !renderInitResult) {
+            return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Renderer initialization failed."));
         }
+
+        // Set default camera viewport to match window
+        ribble::render::CameraView cam;
+        cam.viewportWidth = width;
+        cam.viewportHeight = height;
+        context().set_active_camera(cam);
 
         RIBBLE_LOG_INFO("Window created.");
 
@@ -217,8 +136,7 @@ namespace ribble::core {
             stop();
         }
 
-        // Renderer must shut down first (releases GLX/OpenGL context) before the window,
-        // since the GLX drawable is tied to the X11 window.
+        // Renderer must shut down first (releases graphics context) before the window.
         context().renderer().shutdown();
         context().window().backend()->shutdown();
 
@@ -238,18 +156,10 @@ namespace ribble::core {
     }
 
     Result<void, Engine::Failure> Engine::render() {
-        // Begin frame (clears the screen)
-        if (auto beginResult = context().renderer().begin_frame(); !beginResult) {
-            return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Render begin_frame failed."));
+        auto result = context().renderer().draw_scene(context().active_scene(), context().active_camera());
+        if (!result) {
+            return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Renderer draw_scene failed."));
         }
-
-        // TODO: Add actual rendering calls here
-
-        // End frame (swaps buffers to make the window visible)
-        if (auto endResult = context().renderer().end_frame(); !endResult) {
-            return Fail(RIBBLE_ERROR(Failure::InitializationFailure, "Render end_frame failed."));
-        }
-
         return Ok();
     }
 } // namespace ribble::core

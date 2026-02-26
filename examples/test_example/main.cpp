@@ -23,7 +23,6 @@ int main() {
         std::exit(-1);
     }
 
-
     if (const auto result = engine.run(); !result) {
         RIBBLE_LOG_ERROR("Failed to run correctly.");
         std::exit(-1);

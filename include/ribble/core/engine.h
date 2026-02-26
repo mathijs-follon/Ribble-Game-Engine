@@ -2,8 +2,13 @@
 #include "../../../backend/common/render_backend.h"
 #include "../../../backend/common/window_backend.h"
 #include "fail.h"
+#include "ribble/render/renderer.h"
 #include "ribble/window/window.h"
 #include "time.h"
+
+namespace ribble::scene {
+    class Scene;
+}
 
 namespace ribble::core {
 
@@ -43,8 +48,16 @@ namespace ribble::core {
         [[nodiscard]] const window::WindowContext &window() const { return *m_windowContext; }
         [[nodiscard]] window::WindowContext &window() { return *m_windowContext; }
 
-        [[nodiscard]] const backend::RenderBackend &renderer() const { return *m_renderer; }
-        [[nodiscard]] backend::RenderBackend &renderer() { return *m_renderer; }
+        [[nodiscard]] ribble::render::Renderer &renderer() { return *m_renderer; }
+        [[nodiscard]] const ribble::render::Renderer &renderer() const { return *m_renderer; }
+
+        /// Active scene to draw each frame. If null, only clear is performed.
+        [[nodiscard]] ribble::scene::Scene *active_scene() const { return m_activeScene; }
+        void set_active_scene(ribble::scene::Scene *scene) { m_activeScene = scene; }
+
+        /// Camera used for drawing the active scene.
+        [[nodiscard]] const ribble::render::CameraView &active_camera() const { return m_activeCamera; }
+        void set_active_camera(const ribble::render::CameraView &camera) { m_activeCamera = camera; }
 
         [[nodiscard]] bool has_valid_backends() const {
             return m_windowContext->backend() != nullptr && m_renderer != nullptr;
@@ -54,7 +67,9 @@ namespace ribble::core {
         EngineContextSettings m_settings;
         std::unique_ptr<TimeManager> m_timeManager;
         std::unique_ptr<window::WindowContext> m_windowContext;
-        std::unique_ptr<backend::RenderBackend> m_renderer;
+        std::unique_ptr<ribble::render::Renderer> m_renderer;
+        ribble::scene::Scene *m_activeScene{nullptr};
+        ribble::render::CameraView m_activeCamera;
     };
 
     class Engine {

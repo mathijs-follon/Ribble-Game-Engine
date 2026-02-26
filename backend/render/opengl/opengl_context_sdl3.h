@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
+#include "../../common/window_events.h"
 #include "opengl_context.h"
 
 namespace backend {

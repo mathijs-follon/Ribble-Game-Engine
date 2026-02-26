@@ -1,90 +1,74 @@
 #pragma once
-#include "../../backend/common/backend_types.h"
-#include "../../backend/common/render_backend.h"
+
+#include <glm/glm.hpp>
+#include <memory>
+
 #include "ribble/core/fail.h"
 #include "ribble/render/color.h"
+#include "ribble/scene/scene.h"
+#include "ribble/window/window.h"
+
+namespace backend {
+    class RenderBackend;
+    enum class WindowBackendType;
+    enum class RenderBackendType;
+} // namespace backend
 
 namespace ribble::render {
 
     enum class RendererFailure {
         InitializationFailure,
+        ShutdownFailure,
         DrawFailure,
     };
 
-    /// High-level, backend-agnostic Renderer class
-    /// Wraps RenderBackend and provides convenient rendering interface
+    /// Camera view used for culling and MVP calculation.
+    struct CameraView {
+        glm::mat4 view{1};
+        glm::mat4 projection{1};
+        int viewportX{0};
+        int viewportY{0};
+        int viewportWidth{1024};
+        int viewportHeight{768};
+
+        [[nodiscard]] glm::mat4 view_projection() const { return projection * view; }
+    };
+
+    /// High-level, scene-driven Renderer. Owns the RenderBackend and decides how to
+    /// efficiently render a scene. You provide a scene tree and camera; the renderer
+    /// collects visible renderables, batches them, and draws.
     class Renderer {
     public:
-        explicit Renderer(backend::RenderBackend &backend);
+        Renderer(backend::WindowBackendType windowType, backend::RenderBackendType renderType);
+        ~Renderer();
 
-        /// Begin a new frame (clears buffers)
-        core::Result<void, RendererFailure> begin_frame();
+        Renderer(const Renderer &) = delete;
+        Renderer &operator=(const Renderer &) = delete;
 
-        /// End frame (presents to screen)
-        core::Result<void, RendererFailure> end_frame();
+        /// Initialize with window context (call after window is created).
+        core::Result<void, RendererFailure> initialize(ribble::window::WindowContext &windowContext, int width,
+                                                       int height);
 
-        /// Set viewport
-        void set_viewport(int x, int y, int width, int height);
+        void shutdown();
 
-        /// Set clear color
+        [[nodiscard]] bool is_initialized() const;
+
+        /// Draw the entire scene. Walks the scene tree, collects nodes with renderable
+        /// components that are within the camera viewport, batches for efficiency, and draws.
+        /// Nodes outside the viewport are culled. Pass nullptr to only clear and present.
+        core::Result<void, RendererFailure> draw_scene(scene::Scene *scene, const CameraView &camera);
+
+        /// Set clear color used at frame start.
         void set_clear_color(const ColorRGBA &color);
         void set_clear_color(float r, float g, float b, float a = 1.0f);
 
-        /// Clear buffers
-        void clear(bool color = true, bool depth = true, bool stencil = false);
-
-        // ── Render State ────────────────────────────────────────────────────────
-
-        /// Depth testing
-        void enable_depth_test();
-        void disable_depth_test();
-        void set_depth_func(backend::DepthFunc func);
-        void set_depth_write(bool enabled);
-
-        /// Blending
-        void enable_blend();
-        void disable_blend();
-        void set_blend_func(backend::BlendFactor src, backend::BlendFactor dst);
-        void set_blend_op(backend::BlendOp op);
-
-        /// Face culling
-        void enable_cull_face();
-        void disable_cull_face();
-        void set_cull_mode(backend::CullMode mode);
-        void set_winding_order(backend::WindingOrder order);
-
-        /// Program point size
-        void enable_program_point_size();
-        void disable_program_point_size();
-
-        // ── Drawing ──────────────────────────────────────────────────────────────
-
-        /// Draw indexed geometry
-        core::Result<void, RendererFailure>
-        draw_indexed(backend::RenderHandle vertexArrayHandle, uint32_t indexCount,
-                     backend::IndexType indexType = backend::IndexType::UInt32, uint32_t indexOffset = 0,
-                     int32_t baseVertex = 0,
-                     backend::PrimitiveTopology topology = backend::PrimitiveTopology::Triangles);
-
-        /// Draw non-indexed geometry
-        core::Result<void, RendererFailure>
-        draw_arrays(backend::RenderHandle vertexArrayHandle, uint32_t vertexCount, uint32_t vertexOffset = 0,
-                    backend::PrimitiveTopology topology = backend::PrimitiveTopology::Triangles);
-
-        /// Draw instanced geometry
-        core::Result<void, RendererFailure>
-        draw_instanced(backend::RenderHandle vertexArrayHandle, uint32_t indexCount, uint32_t instanceCount,
-                       backend::IndexType indexType = backend::IndexType::UInt32, uint32_t indexOffset = 0,
-                       int32_t baseVertex = 0,
-                       backend::PrimitiveTopology topology = backend::PrimitiveTopology::Triangles);
-
-        /// Get the underlying render backend
-        [[nodiscard]] backend::RenderBackend &backend() { return m_backend; }
-        [[nodiscard]] const backend::RenderBackend &backend() const { return m_backend; }
+        /// Access the underlying backend for low-level operations (resource creation, etc.).
+        [[nodiscard]] backend::RenderBackend &backend();
+        [[nodiscard]] const backend::RenderBackend &backend() const;
 
     private:
-        backend::RenderBackend &m_backend;
-        bool m_inFrame{false};
+        struct Impl;
+        std::unique_ptr<Impl> m_impl;
     };
 
 } // namespace ribble::render
@@ -92,4 +76,5 @@ namespace ribble::render {
 RIBBLE_ENUM_TO_STRING(
         ribble::render::RendererFailure,
         case ribble::render::RendererFailure::InitializationFailure : return "Renderer Initialization Failure";
+        case ribble::render::RendererFailure::ShutdownFailure : return "Renderer Shutdown Failure";
         case ribble::render::RendererFailure::DrawFailure : return "Renderer Draw Failure";);
