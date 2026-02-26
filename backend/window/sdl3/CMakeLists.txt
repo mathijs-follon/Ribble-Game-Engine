@@ -7,6 +7,10 @@ if(EXISTS ${SDL3_LOCAL_PATH}/CMakeLists.txt)
     add_subdirectory(${SDL3_LOCAL_PATH} sdl3_build)
     set(SDL3_TARGET SDL3-static)
     set(SDL3_INCLUDE_DIR ${SDL3_LOCAL_PATH}/include)
+    # Set POSITION_INDEPENDENT_CODE for SDL3-static since it will be linked into a shared library
+    if(TARGET SDL3-static)
+        set_target_properties(SDL3-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    endif()
 else()
     # Try to find system SDL3
     find_package(SDL3 QUIET)

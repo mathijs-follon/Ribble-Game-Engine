@@ -311,6 +311,8 @@ add_library(Ribble SHARED
         backend/common/render_backend.h
         backend/common/window_backend.h
         backend/common/window_events.h
+        backend/window/sdl3/sdl3_window_backend.h
+        backend/window/sdl3/sdl3_window_backend.cpp
 )
 
 target_include_directories(Ribble PUBLIC
@@ -318,9 +320,15 @@ target_include_directories(Ribble PUBLIC
 )
 
 target_include_directories(Ribble PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/glad/generated/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/backend/common
 )
 
 target_link_libraries(Ribble PUBLIC spdlog::spdlog)
+target_link_libraries(Ribble PRIVATE SDL3::SDL3)
+
+# Link to OpenGL backend since engine.cpp includes OpenGL backend headers
+target_link_libraries(Ribble PRIVATE ribble_backend_opengl)
 
 if(UNIX)
     target_link_libraries(Ribble PUBLIC dl)
@@ -337,6 +345,7 @@ add_subdirectory(tests/integration)
 add_subdirectory(tests/unit)
 
 # Backend
+add_subdirectory(backend/common)
 add_subdirectory(backend/audio/miniaudio)
 add_subdirectory(backend/render/dx12)
 add_subdirectory(backend/render/metal)

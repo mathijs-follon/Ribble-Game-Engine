@@ -1,4 +1,5 @@
 #pragma once
+#include "../../../backend/common/render_backend.h"
 #include "../../../backend/common/window_backend.h"
 #include "fail.h"
 #include "ribble/window/window.h"
@@ -7,8 +8,6 @@
 namespace ribble::core {
 
     class EngineContext {
-
-
     public:
         EngineContext();
         ~EngineContext() = default;
@@ -19,14 +18,19 @@ namespace ribble::core {
         [[nodiscard]] const window::WindowContext &window() const { return *m_windowContext; }
         [[nodiscard]] window::WindowContext &window() { return *m_windowContext; }
 
+        [[nodiscard]] const backend::RenderBackend &renderer() const { return *m_renderer; }
+        [[nodiscard]] backend::RenderBackend &renderer() { return *m_renderer; }
+
     private:
         std::unique_ptr<TimeManager> m_timeManager;
         std::unique_ptr<window::WindowContext> m_windowContext;
+        std::unique_ptr<backend::RenderBackend> m_renderer;
     };
 
     class Engine {
     public:
         enum class Failure {
+            InitializationFailure,
             AlreadyInitialized,
             AlreadyRunning,
             AlreadyShutdown,
@@ -48,12 +52,12 @@ namespace ribble::core {
 
         [[nodiscard]] Result<void, Failure> shutdown();
 
-        const EngineContext &context() const;
+        [[nodiscard]] const EngineContext &context() const;
         EngineContext &context();
 
     private:
         [[nodiscard]] Result<void, Failure> update();
-        [[nodiscard]] Result<void, Failure> render() const;
+        [[nodiscard]] Result<void, Failure> render();
 
         bool m_initialized{false};
         bool m_running{false};

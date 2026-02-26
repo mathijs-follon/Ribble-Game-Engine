@@ -315,14 +315,43 @@ static KeyboardKey sdl_keycode_to_ribble(SDL_Keycode key) {
 Result<void, WindowBackend::Failure> SDLWindow::initialize(int width, int height, const char *title) {
     WindowBackend::initialize(width, height, title);
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "Failed to initialize SDL3 window."));
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+        return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "SDL_Init failed: {}", SDL_GetError()));
+    }
+    RIBBLE_LOG_INFO("SDL_Init success. Video driver: {}",
+                    SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "null");
 
-    m_window = SDL_CreateWindow(title, width, height, SDL_WINDOW_RESIZABLE);
-    if (m_window)
-        return Ok();
+    // Set OpenGL attributes before creating the window
+    // This allows the window to be created with OpenGL support
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+#if defined(RIBBLE_DEBUG)
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif
 
-    return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "Failed to create SDL3 window."));
+    // Create window with OpenGL support
+    m_window = SDL_CreateWindow(title, width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    if (!m_window) {
+        return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "SDL_CreateWindow failed: {}",
+                                 SDL_GetError()));
+    }
+    RIBBLE_LOG_INFO("SDL_CreateWindow success.");
+
+    if (!SDL_ShowWindow(m_window)) {
+        return Fail(RIBBLE_ERROR(WindowBackend::Failure::InitializationFailure, "SDL_ShowWindow failed: {}",
+                                 SDL_GetError()));
+    }
+    RIBBLE_LOG_INFO("SDL_ShowWindow success.");
+
+    SDL_RaiseWindow(m_window);
+
+    SDL_PumpEvents();
+
+    return Ok();
 }
 
 Result<void, WindowBackend::Failure> SDLWindow::poll_events() {
@@ -487,5 +516,7 @@ Result<void, WindowBackend::Failure> SDLWindow::shutdown() {
 }
 
 void *SDLWindow::native_handle() const {
-    return SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+    // Return the SDL_Window* directly for OpenGL context creation
+    // This allows the OpenGL backend to create a context from this window
+    return static_cast<void *>(m_window);
 }
