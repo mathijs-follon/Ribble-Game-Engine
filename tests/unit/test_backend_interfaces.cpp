@@ -7,4 +7,3 @@ TEST_CASE("Backend interface tests placeholder") {
     // Placeholder test - backend interface tests to be implemented
     CHECK(true);
 }
-

@@ -2,32 +2,28 @@
 
 using namespace ribble::core;
 
-RIBBLE_ENUM_TO_STRING(Engine::Failure,
-case Engine::Failure::AlreadyInitialized: return "Already Initialized";
-case Engine::Failure::AlreadyRunning: return "Already Running";
-case Engine::Failure::AlreadyShutdown: return "Already Shut Down";
-);
+RIBBLE_ENUM_TO_STRING(Engine::Failure, case Engine::Failure::AlreadyInitialized : return "Already Initialized";
+                      case Engine::Failure::AlreadyRunning : return "Already Running";
+                      case Engine::Failure::AlreadyShutdown : return "Already Shut Down";);
 
 namespace ribble::core {
 
     // EngineContext
 
-    EngineContext::EngineContext()
-    : m_timeManager{std::make_unique<TimeManager>()}
-    , m_windowContext{std::make_unique<window::WindowContext>(backend::WindowBackendType::SDL3)}
-    {}
+    EngineContext::EngineContext() :
+        m_timeManager{std::make_unique<TimeManager>()},
+        m_windowContext{std::make_unique<window::WindowContext>(backend::WindowBackendType::SDL3)} {}
 
     // Engine
 
-    Engine::Engine()
-    : m_context{nullptr}
-    {}
+    Engine::Engine() : m_context{nullptr} {}
 
     Engine::~Engine() {}
 
     Result<void, Engine::Failure> Engine::initialize() {
         if (m_initialized) {
-            return Fail(RIBBLE_WARN(Failure::AlreadyInitialized, "You are trying to initialize the engine multiple times."));
+            return Fail(RIBBLE_WARN(Failure::AlreadyInitialized,
+                                    "You are trying to initialize the engine multiple times."));
         }
 
         InitializeLogger();
@@ -69,7 +65,9 @@ namespace ribble::core {
 
     Result<void, Engine::Failure> Engine::stop() {
         if (!m_running) {
-            return Fail(RIBBLE_WARN(Failure::AlreadyShutdown, "Either the engine never ran or you are trying to stop the engine multiple times."));
+            return Fail(
+                    RIBBLE_WARN(Failure::AlreadyShutdown,
+                                "Either the engine never ran or you are trying to stop the engine multiple times."));
         }
         RIBBLE_LOG_INFO("Stopping the engine.");
         m_running = false;
@@ -78,15 +76,17 @@ namespace ribble::core {
 
     Result<void, Engine::Failure> Engine::shutdown() {
         if (m_running) {
-            return Fail(RIBBLE_WARN(Failure::AlreadyShutdown, "Either the engine never ran or you are trying to shut the engine down multiple times."));
+            return Fail(RIBBLE_WARN(
+                    Failure::AlreadyShutdown,
+                    "Either the engine never ran or you are trying to shut the engine down multiple times."));
         }
 
         RIBBLE_LOG_INFO("Engine shut down.");
         return Ok();
     }
 
-    inline const EngineContext& Engine::context() const { return *m_context; }
-    inline EngineContext& Engine::context() { return *m_context; }
+    inline const EngineContext &Engine::context() const { return *m_context; }
+    inline EngineContext &Engine::context() { return *m_context; }
 
     Result<void, Engine::Failure> Engine::update() {
         context().time().update();
@@ -94,7 +94,5 @@ namespace ribble::core {
         return Ok();
     }
 
-    Result<void, Engine::Failure> Engine::render() const {
-        return Ok();
-    }
-}
+    Result<void, Engine::Failure> Engine::render() const { return Ok(); }
+} // namespace ribble::core

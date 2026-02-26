@@ -1,9 +1,9 @@
 #pragma once
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <queue>
 #include <vector>
-#include <memory>
 
 namespace ribble::core {
 
@@ -13,13 +13,9 @@ namespace ribble::core {
         bool scheduleAgain;
         std::chrono::milliseconds scheduleAfter;
 
-        static TimerReturn NoRepeat() {
-            return {false, 0ms};
-        }
+        static TimerReturn NoRepeat() { return {false, 0ms}; }
 
-        static TimerReturn Repeat(std::chrono::milliseconds duration) {
-            return {true, duration};
-        }
+        static TimerReturn Repeat(std::chrono::milliseconds duration) { return {true, duration}; }
     };
 
     using TimerCallback = std::function<TimerReturn()>;
@@ -31,7 +27,7 @@ namespace ribble::core {
     };
 
     struct TimerComparator {
-        bool operator()(const std::shared_ptr<Timer>& a, const std::shared_ptr<Timer>& b) const {
+        bool operator()(const std::shared_ptr<Timer> &a, const std::shared_ptr<Timer> &b) const {
             return a->expiryTime > b->expiryTime;
         }
     };
@@ -41,10 +37,10 @@ namespace ribble::core {
         FrameTimer();
         ~FrameTimer();
 
-        FrameTimer(const FrameTimer&) = delete;
-        FrameTimer& operator=(const FrameTimer&) = delete;
-        FrameTimer(FrameTimer&& other) noexcept = default;
-        FrameTimer& operator=(FrameTimer&& other) noexcept = default;
+        FrameTimer(const FrameTimer &) = delete;
+        FrameTimer &operator=(const FrameTimer &) = delete;
+        FrameTimer(FrameTimer &&other) noexcept = default;
+        FrameTimer &operator=(FrameTimer &&other) noexcept = default;
 
         [[nodiscard]] float delta() const { return m_deltaTime; }
         [[nodiscard]] float total() const { return m_totalTime; }
@@ -58,6 +54,7 @@ namespace ribble::core {
 
         void start_frame();
         void end_frame();
+
     private:
         void calculate_delta_time();
         void calculate_fps();
@@ -82,12 +79,12 @@ namespace ribble::core {
         void start_frame();
         void update();
         void end_frame();
-        [[nodiscard]] FrameTimer& frame();
-        [[nodiscard]] const FrameTimer& frame() const;
+        [[nodiscard]] FrameTimer &frame();
+        [[nodiscard]] const FrameTimer &frame() const;
+
     private:
         FrameTimer m_frameTimer;
 
         std::priority_queue<std::shared_ptr<Timer>, std::vector<std::shared_ptr<Timer>>, TimerComparator> m_timers;
-
     };
-}
+} // namespace ribble::core

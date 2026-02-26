@@ -3,4 +3,3 @@
 #include "dx12_shader.h"
 
 // Implementation will go here
-

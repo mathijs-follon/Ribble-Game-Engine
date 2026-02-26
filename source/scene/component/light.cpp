@@ -1,2 +1,1 @@
 // TODO: Light component implementation
-

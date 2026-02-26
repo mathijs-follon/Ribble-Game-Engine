@@ -1,3 +1,1 @@
 // TODO: RenderResourceManager implementation
-
-

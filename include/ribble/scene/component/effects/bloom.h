@@ -1,2 +1,1 @@
 // TODO: Bloom effect component
-

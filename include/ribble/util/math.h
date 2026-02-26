@@ -10,9 +10,7 @@ namespace ribble::util {
         return static_cast<uint8_t>(c * 255.0f + 0.5f);
     }
 
-    inline float u8_to_float(uint8_t v) noexcept {
-        return static_cast<float>(v) / 255.0f;
-    }
+    inline float u8_to_float(uint8_t v) noexcept { return static_cast<float>(v) / 255.0f; }
 
 
-}
+} // namespace ribble::util

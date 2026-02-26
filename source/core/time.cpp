@@ -2,20 +2,14 @@
 #include <thread>
 
 namespace ribble::core {
-    FrameTimer::FrameTimer()
-        : m_lastFrameTime(std::chrono::high_resolution_clock::now())
-        , m_currentFrameTime(m_lastFrameTime)
-    {}
+    FrameTimer::FrameTimer() :
+        m_lastFrameTime(std::chrono::high_resolution_clock::now()), m_currentFrameTime(m_lastFrameTime) {}
 
     FrameTimer::~FrameTimer() = default;
 
-    void FrameTimer::set_limiting(bool state) {
-        m_enableLimiting = state;
-    }
+    void FrameTimer::set_limiting(bool state) { m_enableLimiting = state; }
 
-    void FrameTimer::set_target_fps(float fps) {
-        m_targetFps = fps;
-    }
+    void FrameTimer::set_target_fps(float fps) { m_targetFps = fps; }
 
     void FrameTimer::start_frame() {
         m_currentFrameTime = std::chrono::high_resolution_clock::now();
@@ -29,8 +23,8 @@ namespace ribble::core {
 
         m_lastFrameTime = std::chrono::high_resolution_clock::now();
 
-        const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            m_lastFrameTime - m_currentFrameTime);
+        const auto duration =
+                std::chrono::duration_cast<std::chrono::nanoseconds>(m_lastFrameTime - m_currentFrameTime);
         m_deltaTime = duration.count() / 1'000'000'000.0f;
         m_totalTime += m_deltaTime;
 
@@ -38,8 +32,8 @@ namespace ribble::core {
     }
 
     void FrameTimer::calculate_delta_time() {
-        const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            m_currentFrameTime - m_lastFrameTime);
+        const auto duration =
+                std::chrono::duration_cast<std::chrono::nanoseconds>(m_currentFrameTime - m_lastFrameTime);
         m_deltaTime = duration.count() / 1'000'000'000.0f;
         m_totalTime += m_deltaTime;
     }
@@ -57,8 +51,8 @@ namespace ribble::core {
 
     void FrameTimer::limit_frame_rate() const {
         const auto workDoneTime = std::chrono::high_resolution_clock::now();
-        const auto workDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            workDoneTime - m_currentFrameTime);
+        const auto workDuration =
+                std::chrono::duration_cast<std::chrono::nanoseconds>(workDoneTime - m_currentFrameTime);
 
         const float targetFrameTimeNs = 1'000'000'000.0f / m_targetFps;
         const float workDoneNs = static_cast<float>(workDuration.count());
@@ -66,11 +60,11 @@ namespace ribble::core {
         if (workDoneNs < targetFrameTimeNs) {
             const float sleepNs = (targetFrameTimeNs - workDoneNs) - 1'000'000.0f;
             if (sleepNs > 0.0f) {
-                std::this_thread::sleep_for(
-                    std::chrono::nanoseconds(static_cast<long long>(sleepNs)));
+                std::this_thread::sleep_for(std::chrono::nanoseconds(static_cast<long long>(sleepNs)));
             }
 
-            const auto targetTime = m_currentFrameTime + std::chrono::nanoseconds(static_cast<long long>(targetFrameTimeNs));
+            const auto targetTime =
+                    m_currentFrameTime + std::chrono::nanoseconds(static_cast<long long>(targetFrameTimeNs));
             while (std::chrono::high_resolution_clock::now() < targetTime) {
                 // busy wait
             }
@@ -87,9 +81,7 @@ namespace ribble::core {
         m_timers.push(timer);
     }
 
-    void TimeManager::start_frame() {
-        m_frameTimer.start_frame();
-    }
+    void TimeManager::start_frame() { m_frameTimer.start_frame(); }
 
     void TimeManager::update() {
         const auto now = std::chrono::steady_clock::now();
@@ -113,7 +105,7 @@ namespace ribble::core {
 
         m_timers = std::move(activeTimers);
 
-        for (auto& timer : expiredTimers) {
+        for (auto &timer: expiredTimers) {
             if (auto [scheduleAgain, scheduleAfter] = timer->callback(); scheduleAgain) {
                 timer->expiryTime = std::max(timer->expiryTime + scheduleAfter, now);
                 m_timers.push(timer);
@@ -121,15 +113,9 @@ namespace ribble::core {
         }
     }
 
-    void TimeManager::end_frame() {
-        m_frameTimer.end_frame();
-    }
+    void TimeManager::end_frame() { m_frameTimer.end_frame(); }
 
-    FrameTimer& TimeManager::frame() {
-        return m_frameTimer;
-    }
+    FrameTimer &TimeManager::frame() { return m_frameTimer; }
 
-    const FrameTimer& TimeManager::frame() const {
-        return m_frameTimer;
-    }
-}
+    const FrameTimer &TimeManager::frame() const { return m_frameTimer; }
+} // namespace ribble::core

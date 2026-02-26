@@ -18,6 +18,14 @@ cmake --build build --target Ribble
 cmake --build build --target help | grep -E "^[A-Za-z_]+:" | cut -d: -f1 | sort -u
 ```
 
+## Formatting
+
+```bash
+# Format all project files
+clang-format -i $(git ls-files '*.cpp' '*.h')
+```
+
+
 ## Requirements
 
 - CMake 4.2.3 or later

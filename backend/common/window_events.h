@@ -4,37 +4,126 @@
 
 namespace ribble::backend {
     enum class KeyboardKey {
-        Space, Apostrophe, Comma, Minus, Period, Slash,
-        Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9,
-        Semicolon, Equal,
-        A, B, C, D, E, F, G, H, I, J, K, L, M,
-        N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-        LeftBracket, Backslash, RightBracket, GraveAccent,
+        Space,
+        Apostrophe,
+        Comma,
+        Minus,
+        Period,
+        Slash,
+        Num0,
+        Num1,
+        Num2,
+        Num3,
+        Num4,
+        Num5,
+        Num6,
+        Num7,
+        Num8,
+        Num9,
+        Semicolon,
+        Equal,
+        A,
+        B,
+        C,
+        D,
+        E,
+        F,
+        G,
+        H,
+        I,
+        J,
+        K,
+        L,
+        M,
+        N,
+        O,
+        P,
+        Q,
+        R,
+        S,
+        T,
+        U,
+        V,
+        W,
+        X,
+        Y,
+        Z,
+        LeftBracket,
+        Backslash,
+        RightBracket,
+        GraveAccent,
 
-        F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+        F1,
+        F2,
+        F3,
+        F4,
+        F5,
+        F6,
+        F7,
+        F8,
+        F9,
+        F10,
+        F11,
+        F12,
 
-        Escape, Enter, Tab, Backspace, Insert, Delete,
-        Right, Left, Down, Up,
-        PageUp, PageDown, Home, End,
-        CapsLock, ScrollLock, NumLock, PrintScreen, Pause,
+        Escape,
+        Enter,
+        Tab,
+        Backspace,
+        Insert,
+        Delete,
+        Right,
+        Left,
+        Down,
+        Up,
+        PageUp,
+        PageDown,
+        Home,
+        End,
+        CapsLock,
+        ScrollLock,
+        NumLock,
+        PrintScreen,
+        Pause,
 
-        Kp0, Kp1, Kp2, Kp3, Kp4, Kp5, Kp6, Kp7, Kp8, Kp9,
-        KpDecimal, KpDivide, KpMultiply, KpSubtract, KpAdd, KpEnter, KpEqual,
+        Kp0,
+        Kp1,
+        Kp2,
+        Kp3,
+        Kp4,
+        Kp5,
+        Kp6,
+        Kp7,
+        Kp8,
+        Kp9,
+        KpDecimal,
+        KpDivide,
+        KpMultiply,
+        KpSubtract,
+        KpAdd,
+        KpEnter,
+        KpEqual,
 
-        LeftShift, LeftControl, LeftAlt, LeftSuper,
-        RightShift, RightControl, RightAlt, RightSuper,
+        LeftShift,
+        LeftControl,
+        LeftAlt,
+        LeftSuper,
+        RightShift,
+        RightControl,
+        RightAlt,
+        RightSuper,
         Menu,
 
         Unknown,
     };
 
     enum class KeyModifiers : uint32_t {
-        None    = 0,
-        Shift   = 1 << 0,
+        None = 0,
+        Shift = 1 << 0,
         Control = 1 << 1,
-        Alt     = 1 << 2,
-        Super   = 1 << 3,
-        CapsLock= 1 << 4,
+        Alt = 1 << 2,
+        Super = 1 << 3,
+        CapsLock = 1 << 4,
         NumLock = 1 << 5,
     };
 
@@ -56,10 +145,10 @@ namespace ribble::backend {
 
     enum class GamepadButton {
         Unknown = 0,
-        South,      // A / Cross
-        East,       // B / Circle
-        West,       // X / Square
-        North,      // Y / Triangle
+        South, // A / Cross
+        East, // B / Circle
+        West, // X / Square
+        North, // Y / Triangle
         LeftBumper,
         RightBumper,
         LeftTriggerButton,
@@ -81,7 +170,7 @@ namespace ribble::backend {
         LeftY,
         RightX,
         RightY,
-        LeftTrigger,    // [-1, 1] or [0, 1] depending on backend; normalize to [-1, 1]
+        LeftTrigger, // [-1, 1] or [0, 1] depending on backend; normalize to [-1, 1]
         RightTrigger,
     };
 
@@ -96,59 +185,54 @@ namespace ribble::backend {
             static size_t id = next_event_type_id();
             return id;
         }
-    }
+    } // namespace detail
 
     template<typename Derived>
     class WindowEvent : public core::Event {
     public:
-        [[nodiscard]] size_t type_id() const override {
-            return detail::event_type_id<Derived>();
-        }
-        [[nodiscard]] std::string type_str() const override {
-            return Derived::static_type_str();
-        }
+        [[nodiscard]] size_t type_id() const override { return detail::event_type_id<Derived>(); }
+        [[nodiscard]] std::string type_str() const override { return Derived::static_type_str(); }
     };
 
     class KeyDownEvent : public WindowEvent<KeyDownEvent> {
     public:
         KeyDownEvent() = default;
-        KeyDownEvent(KeyboardKey key, KeyModifiers mods, int scancode, bool repeat)
-            : m_key(key), m_mods(mods), m_scancode(scancode), m_repeat(repeat) {}
+        KeyDownEvent(KeyboardKey key, KeyModifiers mods, int scancode, bool repeat) :
+            m_key(key), m_mods(mods), m_scancode(scancode), m_repeat(repeat) {}
 
         [[nodiscard]] static std::string static_type_str() { return "KeyDownEvent"; }
 
-        [[nodiscard]] KeyboardKey key()      const { return m_key; }
-        [[nodiscard]] KeyModifiers mods()    const { return m_mods; }
-        [[nodiscard]] int scancode()         const { return m_scancode; }
-        [[nodiscard]] bool is_repeat()       const { return m_repeat; }
+        [[nodiscard]] KeyboardKey key() const { return m_key; }
+        [[nodiscard]] KeyModifiers mods() const { return m_mods; }
+        [[nodiscard]] int scancode() const { return m_scancode; }
+        [[nodiscard]] bool is_repeat() const { return m_repeat; }
 
         [[nodiscard]] bool has_mod(KeyModifiers mod) const { return m_mods & mod; }
 
     private:
-        KeyboardKey  m_key{KeyboardKey::Unknown};
+        KeyboardKey m_key{KeyboardKey::Unknown};
         KeyModifiers m_mods{KeyModifiers::None};
-        int          m_scancode{0};
-        bool         m_repeat{false};
+        int m_scancode{0};
+        bool m_repeat{false};
     };
 
     class KeyUpEvent : public WindowEvent<KeyUpEvent> {
     public:
         KeyUpEvent() = default;
-        KeyUpEvent(KeyboardKey key, KeyModifiers mods, int scancode)
-            : m_key(key), m_mods(mods), m_scancode(scancode) {}
+        KeyUpEvent(KeyboardKey key, KeyModifiers mods, int scancode) : m_key(key), m_mods(mods), m_scancode(scancode) {}
 
         [[nodiscard]] static std::string static_type_str() { return "KeyUpEvent"; }
 
-        [[nodiscard]] KeyboardKey  key()      const { return m_key; }
-        [[nodiscard]] KeyModifiers mods()     const { return m_mods; }
-        [[nodiscard]] int          scancode() const { return m_scancode; }
+        [[nodiscard]] KeyboardKey key() const { return m_key; }
+        [[nodiscard]] KeyModifiers mods() const { return m_mods; }
+        [[nodiscard]] int scancode() const { return m_scancode; }
 
         [[nodiscard]] bool has_mod(KeyModifiers mod) const { return m_mods & mod; }
 
     private:
-        KeyboardKey  m_key{KeyboardKey::Unknown};
+        KeyboardKey m_key{KeyboardKey::Unknown};
         KeyModifiers m_mods{KeyModifiers::None};
-        int          m_scancode{0};
+        int m_scancode{0};
     };
 
     class TextInputEvent : public WindowEvent<TextInputEvent> {
@@ -168,14 +252,13 @@ namespace ribble::backend {
     class MouseMoveEvent : public WindowEvent<MouseMoveEvent> {
     public:
         MouseMoveEvent() = default;
-        MouseMoveEvent(double x, double y, double dx, double dy)
-            : m_x(x), m_y(y), m_dx(dx), m_dy(dy) {}
+        MouseMoveEvent(double x, double y, double dx, double dy) : m_x(x), m_y(y), m_dx(dx), m_dy(dy) {}
 
         [[nodiscard]] static std::string static_type_str() { return "MouseMoveEvent"; }
 
         /// Cursor position in window-space pixels.
-        [[nodiscard]] double x()  const { return m_x; }
-        [[nodiscard]] double y()  const { return m_y; }
+        [[nodiscard]] double x() const { return m_x; }
+        [[nodiscard]] double y() const { return m_y; }
         /// Delta from last position.
         [[nodiscard]] double dx() const { return m_dx; }
         [[nodiscard]] double dy() const { return m_dy; }
@@ -190,22 +273,22 @@ namespace ribble::backend {
     class MouseButtonEvent : public WindowEvent<MouseButtonEvent> {
     public:
         MouseButtonEvent() = default;
-        MouseButtonEvent(MouseButton button, ButtonAction action, KeyModifiers mods, double x, double y)
-            : m_button(button), m_action(action), m_mods(mods), m_x(x), m_y(y) {}
+        MouseButtonEvent(MouseButton button, ButtonAction action, KeyModifiers mods, double x, double y) :
+            m_button(button), m_action(action), m_mods(mods), m_x(x), m_y(y) {}
 
         [[nodiscard]] static std::string static_type_str() { return "MouseButtonEvent"; }
 
-        [[nodiscard]] MouseButton  button() const { return m_button; }
+        [[nodiscard]] MouseButton button() const { return m_button; }
         [[nodiscard]] ButtonAction action() const { return m_action; }
-        [[nodiscard]] KeyModifiers mods()   const { return m_mods; }
-        [[nodiscard]] double       x()      const { return m_x; }
-        [[nodiscard]] double       y()      const { return m_y; }
+        [[nodiscard]] KeyModifiers mods() const { return m_mods; }
+        [[nodiscard]] double x() const { return m_x; }
+        [[nodiscard]] double y() const { return m_y; }
 
-        [[nodiscard]] bool is_pressed()  const { return m_action == ButtonAction::Press; }
+        [[nodiscard]] bool is_pressed() const { return m_action == ButtonAction::Press; }
         [[nodiscard]] bool is_released() const { return m_action == ButtonAction::Release; }
 
     private:
-        MouseButton  m_button{MouseButton::Unknown};
+        MouseButton m_button{MouseButton::Unknown};
         ButtonAction m_action{ButtonAction::Press};
         KeyModifiers m_mods{KeyModifiers::None};
         double m_x{0}, m_y{0};
@@ -228,56 +311,56 @@ namespace ribble::backend {
     class GamepadButtonEvent : public WindowEvent<GamepadButtonEvent> {
     public:
         GamepadButtonEvent() = default;
-        GamepadButtonEvent(int gamepadId, GamepadButton button, ButtonAction action)
-            : m_gamepadId(gamepadId), m_button(button), m_action(action) {}
+        GamepadButtonEvent(int gamepadId, GamepadButton button, ButtonAction action) :
+            m_gamepadId(gamepadId), m_button(button), m_action(action) {}
 
         [[nodiscard]] static std::string static_type_str() { return "GamepadButtonEvent"; }
 
-        [[nodiscard]] int           gamepad_id() const { return m_gamepadId; }
-        [[nodiscard]] GamepadButton button()     const { return m_button; }
-        [[nodiscard]] ButtonAction  action()     const { return m_action; }
+        [[nodiscard]] int gamepad_id() const { return m_gamepadId; }
+        [[nodiscard]] GamepadButton button() const { return m_button; }
+        [[nodiscard]] ButtonAction action() const { return m_action; }
 
-        [[nodiscard]] bool is_pressed()  const { return m_action == ButtonAction::Press; }
+        [[nodiscard]] bool is_pressed() const { return m_action == ButtonAction::Press; }
         [[nodiscard]] bool is_released() const { return m_action == ButtonAction::Release; }
 
     private:
-        int           m_gamepadId{0};
+        int m_gamepadId{0};
         GamepadButton m_button{GamepadButton::Unknown};
-        ButtonAction  m_action{ButtonAction::Press};
+        ButtonAction m_action{ButtonAction::Press};
     };
 
     class GamepadAxisEvent : public WindowEvent<GamepadAxisEvent> {
     public:
         GamepadAxisEvent() = default;
-        GamepadAxisEvent(int gamepadId, GamepadAxis axis, float value)
-            : m_gamepadId(gamepadId), m_axis(axis), m_value(value) {}
+        GamepadAxisEvent(int gamepadId, GamepadAxis axis, float value) :
+            m_gamepadId(gamepadId), m_axis(axis), m_value(value) {}
 
         [[nodiscard]] static std::string static_type_str() { return "GamepadAxisEvent"; }
 
-        [[nodiscard]] int         gamepad_id() const { return m_gamepadId; }
-        [[nodiscard]] GamepadAxis axis()       const { return m_axis; }
+        [[nodiscard]] int gamepad_id() const { return m_gamepadId; }
+        [[nodiscard]] GamepadAxis axis() const { return m_axis; }
         /// Normalized value in [-1.0, 1.0].
-        [[nodiscard]] float       value()      const { return m_value; }
+        [[nodiscard]] float value() const { return m_value; }
 
     private:
-        int         m_gamepadId{0};
+        int m_gamepadId{0};
         GamepadAxis m_axis{GamepadAxis::Unknown};
-        float       m_value{0.f};
+        float m_value{0.f};
     };
 
     class GamepadConnectedEvent : public WindowEvent<GamepadConnectedEvent> {
     public:
         GamepadConnectedEvent() = default;
-        explicit GamepadConnectedEvent(int gamepadId, std::string name)
-            : m_gamepadId(gamepadId), m_name(std::move(name)) {}
+        explicit GamepadConnectedEvent(int gamepadId, std::string name) :
+            m_gamepadId(gamepadId), m_name(std::move(name)) {}
 
         [[nodiscard]] static std::string static_type_str() { return "GamepadConnectedEvent"; }
 
-        [[nodiscard]] int                gamepad_id() const { return m_gamepadId; }
-        [[nodiscard]] const std::string& name()       const { return m_name; }
+        [[nodiscard]] int gamepad_id() const { return m_gamepadId; }
+        [[nodiscard]] const std::string &name() const { return m_name; }
 
     private:
-        int         m_gamepadId{0};
+        int m_gamepadId{0};
         std::string m_name;
     };
 
@@ -301,7 +384,7 @@ namespace ribble::backend {
 
         [[nodiscard]] static std::string static_type_str() { return "WindowResizeEvent"; }
 
-        [[nodiscard]] int width()  const { return m_width; }
+        [[nodiscard]] int width() const { return m_width; }
         [[nodiscard]] int height() const { return m_height; }
 
     private:
@@ -384,12 +467,12 @@ namespace ribble::backend {
     class DropEvent : public WindowEvent<DropEvent> {
     public:
         DropEvent() = default;
-        explicit DropEvent(std::vector<std::string> paths, double x = 0, double y = 0)
-            : m_paths(std::move(paths)), m_x(x), m_y(y) {}
+        explicit DropEvent(std::vector<std::string> paths, double x = 0, double y = 0) :
+            m_paths(std::move(paths)), m_x(x), m_y(y) {}
 
         [[nodiscard]] static std::string static_type_str() { return "DropEvent"; }
 
-        [[nodiscard]] const std::vector<std::string>& paths() const { return m_paths; }
+        [[nodiscard]] const std::vector<std::string> &paths() const { return m_paths; }
         [[nodiscard]] double x() const { return m_x; }
         [[nodiscard]] double y() const { return m_y; }
 
@@ -397,4 +480,4 @@ namespace ribble::backend {
         std::vector<std::string> m_paths;
         double m_x{0}, m_y{0};
     };
-}
+} // namespace ribble::backend

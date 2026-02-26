@@ -3,4 +3,3 @@
 #include "dx12_buffer.h"
 
 // Implementation will go here
-

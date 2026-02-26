@@ -5,27 +5,20 @@
 
 using namespace ribble::core;
 RIBBLE_ENUM_TO_STRING(EventBus::Failure,
-case EventBus::Failure::EventBusNotInitialized: return "Event Bus Not Initialized";
-case EventBus::Failure::InvalidEventType: return "Invalid Event Type";
-case EventBus::Failure::ListenerAlreadyExists: return "Listener Already Exists";
-case EventBus::Failure::ListenerNotFound: return "Listener Not Found";
-);
-
+                      case EventBus::Failure::EventBusNotInitialized : return "Event Bus Not Initialized";
+                      case EventBus::Failure::InvalidEventType : return "Invalid Event Type";
+                      case EventBus::Failure::ListenerAlreadyExists : return "Listener Already Exists";
+                      case EventBus::Failure::ListenerNotFound : return "Listener Not Found";);
 
 
 namespace ribble::core {
     EventListenerId EventListener::s_nextId = 1;
 
-    EventListener::EventListener()
-        : m_id(s_nextId++)
-    {}
+    EventListener::EventListener() : m_id(s_nextId++) {}
 
-    EventListener::EventListener(EventHandler handler)
-        : m_id(s_nextId++)
-        , m_handler(std::move(handler))
-    {}
+    EventListener::EventListener(EventHandler handler) : m_id(s_nextId++), m_handler(std::move(handler)) {}
 
-    void EventListener::invoke(const std::shared_ptr<Event>& event) const {
+    void EventListener::invoke(const std::shared_ptr<Event> &event) const {
         if (!m_enabled || !m_handler) {
             return;
         }
@@ -65,11 +58,10 @@ namespace ribble::core {
             return Fail(RIBBLE_WARN(EventBus::Failure::ListenerNotFound, "when unsubscribing from event bus."));
         }
 
-        auto& listeners = it->second;
-        auto listenerIt = std::find_if(listeners.begin(), listeners.end(),
-            [listenerId](const ListenerEntry& entry) {
-                return entry.listener && entry.listener->id() == listenerId;
-            });
+        auto &listeners = it->second;
+        auto listenerIt = std::find_if(listeners.begin(), listeners.end(), [listenerId](const ListenerEntry &entry) {
+            return entry.listener && entry.listener->id() == listenerId;
+        });
 
         if (listenerIt == listeners.end()) {
             return Fail(RIBBLE_WARN(EventBus::Failure::ListenerNotFound, "when unsubscribing from event bus."));
@@ -84,20 +76,17 @@ namespace ribble::core {
         return Ok();
     }
 
-    void EventBus::dispatch(std::type_index eventType, const std::shared_ptr<Event>& event) {
+    void EventBus::dispatch(std::type_index eventType, const std::shared_ptr<Event> &event) {
         if (!m_enabled || !event) {
             return;
         }
 
-        const QueuedEvent queuedEvent {
-            .eventType = eventType,
-            .event = event
-        };
+        const QueuedEvent queuedEvent{.eventType = eventType, .event = event};
 
         m_eventQueue.push(queuedEvent);
     }
 
-    void EventBus::dispatch_immediate(std::type_index eventType, const std::shared_ptr<Event>& event) {
+    void EventBus::dispatch_immediate(std::type_index eventType, const std::shared_ptr<Event> &event) {
         if (!m_enabled || !event) {
             return;
         }
@@ -120,13 +109,9 @@ namespace ribble::core {
         return it->second.size();
     }
 
-    void EventBus::clear() {
-        m_listeners.clear();
-    }
+    void EventBus::clear() { m_listeners.clear(); }
 
-    void EventBus::clear(std::type_index eventType) {
-        m_listeners.erase(eventType);
-    }
+    void EventBus::clear(std::type_index eventType) { m_listeners.erase(eventType); }
 
     void EventBus::process_queue() {
         while (!m_eventQueue.empty()) {
@@ -136,19 +121,17 @@ namespace ribble::core {
         }
     }
 
-    void EventBus::sort_listeners(std::vector<ListenerEntry>& listeners) {
+    void EventBus::sort_listeners(std::vector<ListenerEntry> &listeners) {
         std::ranges::sort(listeners,
-          [](const ListenerEntry& a, const ListenerEntry& b) {
-              return a.priority > b.priority;
-          });
+                          [](const ListenerEntry &a, const ListenerEntry &b) { return a.priority > b.priority; });
     }
 
-    void EventBus::invoke_listeners(const std::vector<ListenerEntry>& listeners, const std::shared_ptr<Event>& event) {
+    void EventBus::invoke_listeners(const std::vector<ListenerEntry> &listeners, const std::shared_ptr<Event> &event) {
         if (!event || event->is_handled()) {
             return;
         }
 
-        for (const auto& entry : listeners) {
+        for (const auto &entry: listeners) {
             if (!entry.listener) {
                 continue;
             }
@@ -161,5 +144,4 @@ namespace ribble::core {
             }
         }
     }
-}
-
+} // namespace ribble::core
