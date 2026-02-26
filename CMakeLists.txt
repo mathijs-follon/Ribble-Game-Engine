@@ -293,6 +293,24 @@ add_library(Ribble SHARED
         source/scene/system.cpp
         source/scene/system_manager.cpp
         source/window/window.cpp
+        include/ribble/render/color.h
+        include/ribble/util/enum.h
+        include/ribble/util/math.h
+        include/ribble/util/color.h
+        include/ribble/core/time.h
+        source/core/time.cpp
+        backend/common/audio_backend.h
+        backend/common/backend_config.h
+        backend/common/backend_descriptors.h
+        backend/common/backend_error.h
+        backend/common/backend_factory.h
+        backend/common/backend_handle.h
+        backend/common/backend_logger.h
+        backend/common/backend_types.h
+        backend/common/input_types.h
+        backend/common/render_backend.h
+        backend/common/window_backend.h
+        backend/common/window_events.h
 )
 
 target_include_directories(Ribble PUBLIC
@@ -319,7 +337,6 @@ add_subdirectory(tests/integration)
 add_subdirectory(tests/unit)
 
 # Backend
-add_subdirectory(backend/common)
 add_subdirectory(backend/audio/miniaudio)
 add_subdirectory(backend/render/dx12)
 add_subdirectory(backend/render/metal)
@@ -331,7 +348,6 @@ add_subdirectory(backend/window/glfw)
 add_subdirectory(backend/window/sdl3)
 add_subdirectory(backend/window/win32)
 add_subdirectory(backend/window/x11)
-
 
 # Editor
 add_subdirectory(editor)

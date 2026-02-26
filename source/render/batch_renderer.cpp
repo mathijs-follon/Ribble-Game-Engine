@@ -1,3 +1,1 @@
 // TODO: BatchRenderer implementation
-
-

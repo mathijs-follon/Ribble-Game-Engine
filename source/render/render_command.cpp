@@ -1,3 +1,1 @@
 // TODO: Render command implementation
-
-

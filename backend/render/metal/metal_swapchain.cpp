@@ -1,3 +1,1 @@
 // TODO: Metal swapchain implementation
-
-

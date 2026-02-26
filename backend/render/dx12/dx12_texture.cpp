@@ -3,4 +3,3 @@
 #include "dx12_texture.h"
 
 // Implementation will go here
-

@@ -6,4 +6,3 @@ TEST_CASE("Metal backend tests placeholder") {
     // Placeholder test - Metal backend tests to be implemented
     CHECK(true);
 }
-

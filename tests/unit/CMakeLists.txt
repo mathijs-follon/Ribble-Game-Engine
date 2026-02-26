@@ -12,7 +12,7 @@ add_executable(ribble_unit_tests
 
 target_include_directories(ribble_unit_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../backend/common
+        ../../include/ribble/backend
 )
 
 target_link_libraries(ribble_unit_tests PRIVATE

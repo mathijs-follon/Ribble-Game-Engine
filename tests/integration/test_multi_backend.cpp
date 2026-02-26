@@ -2,6 +2,4 @@
 
 #include <doctest/doctest.h>
 
-TEST_CASE("Integration multi backend tests placeholder") {
-    CHECK(true);
-}
+TEST_CASE("Integration multi backend tests placeholder") { CHECK(true); }

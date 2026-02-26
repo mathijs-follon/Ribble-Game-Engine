@@ -1,3 +1,1 @@
-// TODO: InputManager implementation
-
-
+#include <ribble/input/input_manager.h>

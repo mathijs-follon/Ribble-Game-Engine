@@ -11,7 +11,7 @@ add_library(ribble_backend_audio_miniaudio STATIC
 
 target_include_directories(ribble_backend_audio_miniaudio PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+        ../../../include/ribble/backend
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/miniaudio
 )
 

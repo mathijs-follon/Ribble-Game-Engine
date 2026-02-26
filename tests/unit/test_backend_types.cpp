@@ -6,4 +6,3 @@ TEST_CASE("Backend types tests placeholder") {
     // Placeholder test - backend types tests to be implemented
     CHECK(true);
 }
-

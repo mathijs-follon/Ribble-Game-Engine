@@ -3,6 +3,4 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
-TEST_CASE("Integration backend switching tests placeholder") {
-    CHECK(true);
-}
+TEST_CASE("Integration backend switching tests placeholder") { CHECK(true); }

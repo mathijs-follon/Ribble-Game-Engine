@@ -3,4 +3,3 @@
 #include "vulkan_memory.h"
 
 // Implementation will go here
-

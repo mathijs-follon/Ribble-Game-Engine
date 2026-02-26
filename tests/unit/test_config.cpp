@@ -51,13 +51,7 @@ TEST_CASE("Load config from JSON") {
 
     ribble::core::DefaultConfig config{};
 
-    json j = {
-        {"width", 800},
-        {"height", 600},
-        {"title", "App"},
-        {"fullscreen", false},
-        {"scale", 1.5f}
-    };
+    json j = {{"width", 800}, {"height", 600}, {"title", "App"}, {"fullscreen", false}, {"scale", 1.5f}};
 
     auto result = config.load_from_json(j);
 
@@ -87,10 +81,7 @@ TEST_CASE("Load JSON fails on unsupported value type") {
 
     ribble::core::DefaultConfig config{};
 
-    json j = {
-        {"valid", 123},
-        {"invalid", json::array({1, 2, 3})}
-    };
+    json j = {{"valid", 123}, {"invalid", json::array({1, 2, 3})}};
 
     auto result = config.load_from_json(j);
 
@@ -103,10 +94,7 @@ TEST_CASE("Load JSON stops on first invalid entry") {
 
     ribble::core::DefaultConfig config{};
 
-    json j = {
-        {"ok", 42},
-        {"bad", json::object()}
-    };
+    json j = {{"ok", 42}, {"bad", json::object()}};
 
     auto result = config.load_from_json(j);
 

@@ -1,3 +1,1 @@
 // TODO: Projection utilities implementation
-
-

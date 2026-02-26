@@ -29,7 +29,7 @@ add_library(ribble_backend_vulkan STATIC
 
 target_include_directories(ribble_backend_vulkan PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+        ../../../include/ribble/backend
     ${Vulkan_INCLUDE_DIRS}
 )
 

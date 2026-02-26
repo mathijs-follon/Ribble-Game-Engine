@@ -3,4 +3,3 @@
 #include "dx12_pipeline.h"
 
 // Implementation will go here
-

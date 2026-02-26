@@ -1,3 +1,1 @@
 // TODO: ShadowMap implementation
-
-

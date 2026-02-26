@@ -6,4 +6,3 @@ TEST_CASE("Vulkan backend tests placeholder") {
     // Placeholder test - Vulkan backend tests to be implemented
     CHECK(true);
 }
-

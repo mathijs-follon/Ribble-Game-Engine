@@ -7,4 +7,3 @@ TEST_CASE("Backend factory tests placeholder") {
     // Placeholder test - backend factory tests to be implemented
     CHECK(true);
 }
-

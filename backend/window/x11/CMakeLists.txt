@@ -10,7 +10,7 @@ if(UNIX AND NOT APPLE)
 
     target_include_directories(ribble_backend_window_x11 PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+            ../../../include/ribble/backend
         ${X11_INCLUDE_DIR}
     )
 
