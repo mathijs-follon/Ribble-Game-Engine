@@ -1,5 +1,9 @@
 # Ribble
 
+Planning to make Ribble a rust project...
+
+---
+
 A cross-platform game engine written in C++23.
 
 ## Building
